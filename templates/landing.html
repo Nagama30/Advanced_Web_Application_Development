@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <title>Open Source Social Network</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/title_pic.png') }}" type="image/png" sizes="16x16"> 
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/color.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+</head>
+<body>
+    <div class="theme-layout">
+        <div class="container-fluid pdng0">
+            <div class="row merged">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="land-featurearea">
+                        <div class="land-meta">
+                            <h1>Open Source Social Network</h1>
+                            <p>Make your contribution to the project and much more..!!</p>
+                            <div class="friend-logo">
+                                <span><img src="{{ url_for('static', filename='images/logo_new.jpg') }}" alt=""></span>
+                            </div>
+                        </div>  
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                    <div class="login-reg-bg">
+                        <div class="log-reg-area sign">
+                            <h2 class="log-title">Login</h2>
+                            <form action="{{ url_for('login') }}" method="post">
+                                <div class="form-group">    
+                                    <input type="text" name="user_name" id="user_name" required="required"/>
+                                    <label class="control-label" for="user_name">Username</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="form-group">    
+                                    <input type="password" name="password" id="password" required="required"/>
+                                    <label class="control-label" for="password">Password</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="remember" id="remember" checked="checked"/><i class="check-box"></i>Always Remember Me.
+                                    </label>
+                                </div>
+                                <a href="#" title="" class="forgot-pwd">Forgot Password?</a>
+                                <div class="submit-btns">
+                                    <button class="mtr-btn signin" type="submit"><span>Login</span></button>
+                                    <button class="mtr-btn signup" type="button" onclick="showRegisterForm()"><span>Register</span></button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="log-reg-area reg" style="display: none;">
+                            <h2 class="log-title">Register</h2>
+                            <form action="{{ url_for('register') }}" method="post">
+                                <div class="form-group">    
+                                    <input type="text" name="first_last_name" id="first_last_name" required="required"/>
+                                    <label class="control-label" for="first_last_name">First and Last Name</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="form-group">    
+                                    <input type="text" name="user_name" id="user_name1" required="required"/>
+                                    <label class="control-label" for="user_name1">User Name</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="form-group">    
+                                    <input type="password" name="password" id="password1" required="required"/>
+                                    <label class="control-label" for="password1">Password</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="form-radio">
+                                    <div class="radio">
+                                        <label>
+                                            <input type="radio" name="gender" value="Male" checked="checked"/><i class="check-box"></i>Male
+                                        </label>
+                                    </div>
+                                    <div class="radio">
+                                        <label>
+                                            <input type="radio" name="gender" value="Female"/><i class="check-box"></i>Female
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group">    
+                                    <input type="email" name="email" id="email" required="required" autocomplete="on"/>
+                                    <label class="control-label" for="email">Email</label><i class="mtrl-select"></i>
+                                </div>
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" name="accept_terms" checked="checked"/><i class="check-box"></i>Accept Terms and Conditions ?
+                                    </label>
+                                </div>
+                                <a href="#" title="" class="already-have" onclick="showLoginForm()">Already have an account</a>
+                                <div class="submit-btns">
+                                    <button class="mtr-btn signup" type="submit"><span>Register</span></button>
+                                    <button class="mtr-btn clear" type="button" onclick="clearForm(this)"><span>Clear</span></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash message section -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        // Function to show and auto-hide flash messages
+        function showFlashMessages() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(message => {
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 2000); // 2000 milliseconds = 2 seconds
+            });
+        }
+        window.onload = showFlashMessages;
+    </script>
+    <script>
+        // Function to clear all input fields in the form
+        function clearForm(button) {
+            button.closest('form').reset();
+        }
+
+        // Function to show the registration form and hide the login form
+        function showRegisterForm() {
+            document.querySelector('.log-reg-area.sign').style.display = 'none';
+            document.querySelector('.log-reg-area.reg').style.display = 'block';
+        }
+
+        // Function to show the login form and hide the registration form
+        function showLoginForm() {
+            document.querySelector('.log-reg-area.sign').style.display = 'block';
+            document.querySelector('.log-reg-area.reg').style.display = 'none';
+        }
+    </script>
+
+    <!--<script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>-->
+</body>
+</html>
