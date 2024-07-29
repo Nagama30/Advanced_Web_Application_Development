@@ -32,7 +32,7 @@
                     <div class="login-reg-bg">
                         <div class="log-reg-area sign">
                             <h2 class="log-title">Login</h2>
-                            <form action="{{ url_for('login') }}" method="post">
+                            <form action="{{ url_for('login') }}" method="post" onsubmit="return validateForm(this)">
                                 <div class="form-group">    
                                     <input type="text" name="user_name" id="user_name" required="required"/>
                                     <label class="control-label" for="user_name">Username</label><i class="mtrl-select"></i>
@@ -55,7 +55,7 @@
                         </div>
                         <div class="log-reg-area reg" style="display: none;">
                             <h2 class="log-title">Register</h2>
-                            <form action="{{ url_for('register') }}" method="post">
+                            <form action="{{ url_for('register') }}" method="post" onsubmit="return validateForm(this)">
                                 <div class="form-group">    
                                     <input type="text" name="first_last_name" id="first_last_name" required="required"/>
                                     <label class="control-label" for="first_last_name">First and Last Name</label><i class="mtrl-select"></i>
@@ -91,7 +91,7 @@
                                 </div>
                                 <a href="#" title="" class="already-have" onclick="showLoginForm()">Already have an account</a>
                                 <div class="submit-btns">
-                                    <button class="mtr-btn signup" type="submit"><span>Register</span></button>
+                                    <button class="mtr-btn signup" id="register-btn" type="submit"><span>Register</span></button>
                                     <button class="mtr-btn clear" type="button" onclick="clearForm(this)"><span>Clear</span></button>
                                 </div>
                             </form>
@@ -125,6 +125,7 @@
         }
         window.onload = showFlashMessages;
     </script>
+
     <script>
         // Function to clear all input fields in the form
         function clearForm(button) {
@@ -144,7 +145,57 @@
         }
     </script>
 
-    <!--<script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>-->
+    <script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <script>
+        // Function to show the registration form and hide the login form
+        function showRegisterForm() {
+            document.querySelector('.log-reg-area.sign').style.display = 'none';
+            document.querySelector('.log-reg-area.reg').style.display = 'block';
+        }
+
+        // Function to show the login form and hide the registration form
+        function showLoginForm() {
+            document.querySelector('.log-reg-area.sign').style.display = 'block';
+            document.querySelector('.log-reg-area.reg').style.display = 'none';
+        }
+
+        // Function to validate form inputs
+        function validateForm(form) {
+            let valid = true;
+            const inputs = form.querySelectorAll('input[required]');
+
+            inputs.forEach(input => {
+                if (input.value.trim() === '') {
+                    valid = false;
+                    input.classList.add('input-error'); // Add a class to highlight the error
+                } else {
+                    input.classList.remove('input-error'); // Remove the error class if input is valid
+                }
+            });
+
+            if (!valid) {
+                alert('Please fill out all required fields.');
+            }
+
+            return valid;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var registerButton = document.getElementById('register-btn');
+            registerButton.addEventListener('click', function (event) {
+                console.log('Overriding button behavior');
+                
+                // Prevent any default behavior including other JS
+                event.stopImmediatePropagation();
+                
+                // Allow the form to submit normally (remove this if you don't want the form to submit)
+                event.preventDefault();
+                this.closest('form').submit();
+            }, true);
+        });
+    </script>
+
 </body>
 </html>

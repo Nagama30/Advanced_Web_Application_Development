@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from werkzeug.security import generate_password_hash, check_password_hash
+from psycopg2.extras import RealDictCursor
+import psycopg2
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
@@ -79,7 +81,7 @@ def account():
     if 'user_id' not in session:
         flash('Please log in to access this page.', 'warning')
         return redirect(url_for('index'))
-    return render_template('account.html', username=session['username'])
+    return render_template('account.html', user_name=session['user_name'])
 
 @app.route('/landing')
 def landing():
@@ -88,6 +90,147 @@ def landing():
 @app.route('/register', methods=['GET'])
 def register_user():
     return render_template('reg.html')
+
+@app.route('/logout')
+def logout():
+    print("Logout route accessed")
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('landing'))
+
+@app.route('/edit_profile_basic', methods=['GET', 'POST'])
+def edit_profile_basic():
+    if request.method == 'POST':
+        user_name = session.get('user_name')  # Assuming user_name is stored in the session
+        first_last_name = request.form.get('first_last_name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        dob = request.form.get('dob')
+        gender = request.form.get('gender')
+        city = request.form.get('city')
+        country = request.form.get('country')
+        about_me = request.form.get('about_me')
+        
+        # Handle profile photo upload
+        profile_photo = request.files.get('profile_photo')
+        if profile_photo:
+            filename = secure_filename(profile_photo.filename)
+            profile_photo.save(os.path.join('path/to/save', filename))
+            profile_photo_path = os.path.join('path/to/save', filename)
+        else:
+            profile_photo_path = None
+
+        try:
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    if profile_photo_path:
+                        update_query = """
+                        UPDATE users SET
+                            first_last_name = %s,
+                            email = %s,
+                            phone = %s,
+                            dob = %s,
+                            gender = %s,
+                            city = %s,
+                            country = %s,
+                            about_me = %s,
+                            profile_photo = %s
+                        WHERE user_name = %s
+                        """
+                        cursor.execute(update_query, (
+                            first_last_name,
+                            email,
+                            phone,
+                            dob,
+                            gender,
+                            city,
+                            country,
+                            about_me,
+                            profile_photo_path,
+                            user_name
+                        ))
+                    else:
+                        update_query = """
+                        UPDATE users SET
+                            first_last_name = %s,
+                            email = %s,
+                            phone = %s,
+                            dob = %s,
+                            gender = %s,
+                            city = %s,
+                            country = %s,
+                            about_me = %s
+                        WHERE user_name = %s
+                        """
+                        cursor.execute(update_query, (
+                            first_last_name,
+                            email,
+                            phone,
+                            dob,
+                            gender,
+                            city,
+                            country,
+                            about_me,
+                            user_name
+                        ))
+
+                    conn.commit()
+                    flash('Profile updated successfully!', 'success')
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            flash(f'Error updating profile: {e}', 'danger')
+        finally:
+            if conn:
+                conn.close()
+
+        return redirect(url_for('edit_profile_basic'))  # Assuming there's a profile page to redirect to
+
+    return render_template('edit_profile_basic.html')
+
+
+
+@app.route('/edit_password', methods=['GET', 'POST'])
+def edit_password():
+    if request.method == 'POST':
+        user_name = session.get('user_name')  # Assuming user_name is stored in the session
+        old_pass = request.form.get('old_pass')
+        new_pass = request.form.get('new_pass')
+        confirm_pass = request.form.get('confirm_pass')
+
+        if new_pass != confirm_pass:
+            flash('New password and confirmation do not match!', 'danger')
+            return redirect(url_for('edit_password'))
+
+        try:
+            conn = get_db_connection()
+            if conn:
+                with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                    # Check if the old password matches the one in the database
+                    cursor.execute("SELECT password FROM users WHERE user_name = %s", (user_name,))
+                    user = cursor.fetchone()
+                    if user and check_password_hash(user['password'], old_pass):
+                        # Update the password
+                        new_pass_hashed = generate_password_hash(new_pass)
+                        cursor.execute("UPDATE users SET password = %s WHERE user_name = %s", (new_pass_hashed, user_name))
+                        conn.commit()
+                        flash('Password updated successfully!', 'success')
+                    else:
+                        flash('Old password is incorrect!', 'danger')
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            flash(f'Error updating password: {e}', 'danger')
+        finally:
+            if conn:
+                conn.close()
+
+        return redirect(url_for('edit_password'))  # Redirect to the password edit page
+
+    return render_template('edit_password.html')
+
+
 
 if __name__ == '__main__':
     print("Starting Flask app...")
