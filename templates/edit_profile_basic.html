@@ -172,15 +172,6 @@
 										<h5 class="f-title"><i class="ti-info-alt"></i> Edit Basic Information</h5>
 
 										<form action="{{ url_for('edit_profile_basic') }}" method="post">
-											<!-- Profile Photo Upload Section -->
-											<div class="form-group half">
-												<img id="profilePhotoPreview" src="" alt="Profile Photo" style="width: 200px; height: 200px; display: none; object-fit: cover; border: 5px solid #121212;"/>
-											</div>
-											<div class="form-group half">
-												<input type="file" id="profilePhotoInput" name="profilePhotoInput" accept="image/*" required="required">
-												<!--<button type="button" class="mtr-btn" onclick="document.getElementById('profilePhotoInput').click();"><span>Browse Photo</span></button><i class="mtrl-select"></i>-->
-												<label class="control-label" for="profilePhotoInput">Upload Profile Photo</label>
-											</div>
 											<div class="form-group">	
 											  <input type="text" name="first_last_name" id="first_last_name" required="required"/>
 											  <label class="control-label" for="first_last_name">First and Last Name</label><i class="mtrl-select"></i>
@@ -837,20 +828,6 @@
 		});
 	</script>
 
-	<script>
-		document.getElementById('profilePhotoInput').addEventListener('change', function(event) {
-			const file = event.target.files[0];
-			if (file) {
-				const reader = new FileReader();
-				reader.onload = function(e) {
-					document.getElementById('profilePhotoPreview').src = e.target.result;
-					document.getElementById('profilePhotoPreview').style.display = 'block';
-				};
-				reader.readAsDataURL(file);
-			}
-		});
-	</script>
-
     <script>
         // Function to show and auto-hide flash messages
         function showFlashMessages() {
@@ -868,12 +845,6 @@
 			document.getElementById("cancel-button").onclick = function() {
 				window.location.href = "/account";
 			};
-		});
-	</script>
-	<script>
-		document.getElementById('profilePhotoInput').addEventListener('change', function() {
-			var fileName = this.files[0].name;
-			document.getElementById('file-name').textContent = 'File selected: ' + fileName;
 		});
 	</script>
 </body>	

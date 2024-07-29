@@ -192,73 +192,41 @@
 		</div>
 	</footer><!-- footer -->
 </div>
-	<div class="side-panel">
-			<h4 class="panel-title">General Setting</h4>
-			<form method="post">
-				<div class="setting-row">
-					<span>use night mode</span>
-					<input type="checkbox" id="nightmode1"/> 
-					<label for="nightmode1" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Notifications</span>
-					<input type="checkbox" id="switch22" /> 
-					<label for="switch22" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Notification sound</span>
-					<input type="checkbox" id="switch33" /> 
-					<label for="switch33" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>My profile</span>
-					<input type="checkbox" id="switch44" /> 
-					<label for="switch44" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Show profile</span>
-					<input type="checkbox" id="switch55" /> 
-					<label for="switch55" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-			</form>
-			<h4 class="panel-title">Account Setting</h4>
-			<form method="post">
-				<div class="setting-row">
-					<span>Sub users</span>
-					<input type="checkbox" id="switch66" /> 
-					<label for="switch66" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>personal account</span>
-					<input type="checkbox" id="switch77" /> 
-					<label for="switch77" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Business account</span>
-					<input type="checkbox" id="switch88" /> 
-					<label for="switch88" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Show me online</span>
-					<input type="checkbox" id="switch99" /> 
-					<label for="switch99" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Delete history</span>
-					<input type="checkbox" id="switch101" /> 
-					<label for="switch101" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-				<div class="setting-row">
-					<span>Expose author name</span>
-					<input type="checkbox" id="switch111" /> 
-					<label for="switch111" data-on-label="ON" data-off-label="OFF"></label>
-				</div>
-			</form>
-	</div><!-- side panel -->		
-	
-	<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/main.min.js"></script>
-	<script src="js/script.js"></script>
 
+	<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/main.min.js"></script>
+	<script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/map-init.js') }}"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8c55_YHLvDHGACkQscgbGLtLRdxBDCfI"></script>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.user-setting > a').forEach(function (link) {
+				link.addEventListener('click', function (event) {
+					console.log('Overriding link behavior:', event.target.href);
+					// Ensure the default action is allowed
+					event.stopPropagation(); // Prevent other handlers from running
+					// Remove any existing event listeners that might be preventing default action
+					link.onclick = null;
+				}, true);
+			});
+		});
+	</script>
+
+	<script>
+		// Function to show and auto-hide flash messages
+		function showFlashMessages() {
+			const flashMessages = document.querySelectorAll('.flash-message');
+			flashMessages.forEach(message => {
+				setTimeout(() => {
+					message.style.display = 'none';
+				}, 5000); // 2000 milliseconds = 2 seconds
+			});
+		}
+		window.onload = showFlashMessages;
+	</script>
+
+	
 </body>	
 
 

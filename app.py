@@ -14,12 +14,8 @@ UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-PROFILE_PIC_FOLDER = 'profile_pic'
-if not os.path.exists(PROFILE_PIC_FOLDER):
-    os.makedirs(PROFILE_PIC_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['PROFILE_PIC_FOLDER'] = PROFILE_PIC_FOLDER 
 app.config['ALLOWED_EXTENSIONS'] = {'zip'}
 
 
@@ -117,10 +113,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
-def allowed_file_img(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/edit_profile_basic', methods=['GET', 'POST'])
 def edit_profile_basic():
     if request.method == 'POST':
@@ -134,32 +126,11 @@ def edit_profile_basic():
         country = request.form.get('country')
         about_me = request.form.get('about_me')
         
-        # Handle profile photo upload
-        profile_photo = request.files.get('profilePhotoInput')
-        profile_photo_path = None
-
-        if profile_photo and profile_photo.filename != '':
-            if allowed_file_img(profile_photo.filename):
-                # Create a directory for the user if it doesn't exist
-                user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_name)
-                if not os.path.exists(user_folder):
-                    os.makedirs(user_folder)
-
-        # Generate a unique filename with current date and time
-                original_filename = secure_filename(profile_photo.filename)
-                curr_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"{curr_time}_{original_filename}"
-                file_path = os.path.join(user_folder, filename)
-                print(file_path)
-                profile_photo.save(file_path)
-                profile_photo_path = file_path
-                
-
         try:
             conn = get_db_connection()
             if conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                    update_query = """UPDATE users SET first_last_name = %s, email = %s, phone = %s, dob = %s, gender = %s, city = %s, country = %s, about_me = %s, profile_photo = %s WHERE user_name = %s"""
+                    update_query = """UPDATE users SET first_last_name = %s, email = %s, phone = %s, dob = %s, gender = %s, city = %s, country = %s, about_me = %s WHERE user_name = %s"""
                     cursor.execute(update_query, (
                             first_last_name,
                             email,
@@ -169,7 +140,6 @@ def edit_profile_basic():
                             city,
                             country,
                             about_me,
-                            profile_photo_path,
                             user_name
                     ))           
                     conn.commit()
@@ -283,12 +253,8 @@ def create_project():
     return render_template('create_project.html')
 
 
-@app.route('/view_project', methods=['GET'])
-def view_project():
-    return render_template('view_project.html')
-
 @app.route('/view_project')
-def project_page():
+def view_project():
     user_name = session.get('user_name')  # Assuming user_name is stored in the session
     if not user_name:
         flash('User not logged in', 'danger')
