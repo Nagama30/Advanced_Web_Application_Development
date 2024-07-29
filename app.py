@@ -237,7 +237,7 @@ def create_project():
         upload_date = datetime.now()
 
         if zip_file and zip_file.filename != '':
-            if (zip_file.filename):
+            if zip_file.filename.endswith('.zip'):  # Ensure the uploaded file is a ZIP file
                 # Create a directory for the user if it doesn't exist
                 user_folder = os.path.join(app.config['UPLOAD_FOLDER'], owner)
                 if not os.path.exists(user_folder):
@@ -254,9 +254,6 @@ def create_project():
                 file_path = os.path.join(timestamp_folder_path, original_filename)
                 print(f"File path: {file_path}")
                 zip_file.save(file_path)
-
-                # Print debug information
-                print(f"File path: {file_path}")
 
                 # Save project information and file path to the database
                 try:
@@ -275,7 +272,7 @@ def create_project():
                     print(f"Error: {e}")  # Print error message for debugging
                     if conn:
                         conn.rollback()
-                        flash(f'Error saving project: {e}', 'danger')
+                    flash(f'Error saving project: {e}', 'danger')
                 finally:
                     if conn:
                         conn.close()
@@ -283,7 +280,6 @@ def create_project():
                 flash('Invalid file type. Only ZIP files are allowed.', 'danger')
         else:
             flash('No file selected or file is empty.', 'danger')
-
     return render_template('create_project.html')
 
 
