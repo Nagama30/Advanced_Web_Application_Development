@@ -4,9 +4,24 @@ from psycopg2.extras import RealDictCursor
 import psycopg2
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime
+
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
+
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+PROFILE_PIC_FOLDER = 'profile_pic'
+if not os.path.exists(PROFILE_PIC_FOLDER):
+    os.makedirs(PROFILE_PIC_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_PIC_FOLDER'] = PROFILE_PIC_FOLDER 
+app.config['ALLOWED_EXTENSIONS'] = {'zip'}
+
 
 # Database configuration
 DB_HOST = "localhost"
@@ -21,6 +36,10 @@ def get_db_connection():
     except Exception as e:
         print("Error connecting to the database:", e)
         return None
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/')
 def index():
@@ -98,6 +117,10 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/edit_profile_basic', methods=['GET', 'POST'])
 def edit_profile_basic():
     if request.method == 'POST':
@@ -112,33 +135,32 @@ def edit_profile_basic():
         about_me = request.form.get('about_me')
         
         # Handle profile photo upload
-        profile_photo = request.files.get('profile_photo')
-        if profile_photo:
-            filename = secure_filename(profile_photo.filename)
-            profile_photo.save(os.path.join('path/to/save', filename))
-            profile_photo_path = os.path.join('path/to/save', filename)
-        else:
-            profile_photo_path = None
+        profile_photo = request.files.get('profilePhotoInput')
+        profile_photo_path = None
+
+        if profile_photo and profile_photo.filename != '':
+            if allowed_file(profile_photo.filename):
+                # Create a directory for the user if it doesn't exist
+                user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_name)
+                if not os.path.exists(user_folder):
+                    os.makedirs(user_folder)
+
+        # Generate a unique filename with current date and time
+                original_filename = secure_filename(profile_photo.filename)
+                curr_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"{curr_time}_{original_filename}"
+                file_path = os.path.join(user_folder, filename)
+                print(file_path)
+                profile_photo.save(file_path)
+                profile_photo_path = file_path
+                
 
         try:
             conn = get_db_connection()
             if conn:
                 with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                    if profile_photo_path:
-                        update_query = """
-                        UPDATE users SET
-                            first_last_name = %s,
-                            email = %s,
-                            phone = %s,
-                            dob = %s,
-                            gender = %s,
-                            city = %s,
-                            country = %s,
-                            about_me = %s,
-                            profile_photo = %s
-                        WHERE user_name = %s
-                        """
-                        cursor.execute(update_query, (
+                    update_query = """UPDATE users SET first_last_name = %s, email = %s, phone = %s, dob = %s, gender = %s, city = %s, country = %s, about_me = %s, profile_photo = %s WHERE user_name = %s"""
+                    cursor.execute(update_query, (
                             first_last_name,
                             email,
                             phone,
@@ -149,32 +171,7 @@ def edit_profile_basic():
                             about_me,
                             profile_photo_path,
                             user_name
-                        ))
-                    else:
-                        update_query = """
-                        UPDATE users SET
-                            first_last_name = %s,
-                            email = %s,
-                            phone = %s,
-                            dob = %s,
-                            gender = %s,
-                            city = %s,
-                            country = %s,
-                            about_me = %s
-                        WHERE user_name = %s
-                        """
-                        cursor.execute(update_query, (
-                            first_last_name,
-                            email,
-                            phone,
-                            dob,
-                            gender,
-                            city,
-                            country,
-                            about_me,
-                            user_name
-                        ))
-
+                    ))           
                     conn.commit()
                     flash('Profile updated successfully!', 'success')
         except Exception as e:
@@ -188,7 +185,6 @@ def edit_profile_basic():
         return redirect(url_for('edit_profile_basic'))  # Assuming there's a profile page to redirect to
 
     return render_template('edit_profile_basic.html')
-
 
 
 @app.route('/edit_password', methods=['GET', 'POST'])
@@ -230,6 +226,65 @@ def edit_password():
 
     return render_template('edit_password.html')
 
+
+@app.route('/create_project', methods=['GET', 'POST'])
+def create_project():
+    if request.method == 'POST':
+        project_name = request.form.get('project_name')
+        abstract = request.form.get('abstract')
+        owner = session.get('user_name')  # Assuming user_name is stored in the session
+        zip_file = request.files.get('zip_file')
+        upload_date = datetime.now()
+
+        if zip_file and zip_file.filename != '':
+            if allowed_file(zip_file.filename):
+                # Create a directory for the user if it doesn't exist
+                user_folder = os.path.join(app.config['UPLOAD_FOLDER'], owner)
+                if not os.path.exists(user_folder):
+                    os.makedirs(user_folder)
+
+                # Create a timestamp-based subdirectory under the user's folder
+                timestamp_folder = upload_date.strftime("%Y%m%d_%H%M%S")
+                timestamp_folder_path = os.path.join(user_folder, timestamp_folder)
+                if not os.path.exists(timestamp_folder_path):
+                    os.makedirs(timestamp_folder_path)
+
+                # Generate filename and save path
+                original_filename = secure_filename(zip_file.filename)
+                file_path = os.path.join(timestamp_folder_path, original_filename)
+                print(f"File path: {file_path}")
+                zip_file.save(file_path)
+
+                # Print debug information
+                print(f"File path: {file_path}")
+
+                # Save project information and file path to the database
+                try:
+                    conn = get_db_connection()
+                    if conn:
+                        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                            insert_query = """
+                            INSERT INTO project_data (project_name, abstract, owner, zip_file, upload_date)
+                            VALUES (%s, %s, %s, %s, %s)
+                            """
+                            print(f"Inserting into database: {project_name}, {abstract}, {owner}, {file_path}, {upload_date}")
+                            cursor.execute(insert_query, (project_name, abstract, owner, file_path, upload_date))
+                            conn.commit()
+                            flash('Project created and file uploaded successfully!', 'success')
+                except Exception as e:
+                    print(f"Error: {e}")  # Print error message for debugging
+                    if conn:
+                        conn.rollback()
+                        flash(f'Error saving project: {e}', 'danger')
+                finally:
+                    if conn:
+                        conn.close()
+            else:
+                flash('Invalid file type. Only ZIP files are allowed.', 'danger')
+        else:
+            flash('No file selected or file is empty.', 'danger')
+
+    return render_template('create_project.html')
 
 
 if __name__ == '__main__':

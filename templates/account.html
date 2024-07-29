@@ -46,19 +46,11 @@
 					<a href="#" title="">Home</a>
 				</li>
 				<li>
-					<a href="#" title="">timeline</a>
-					<ul>
-						<li><a href="time-line.html" title="">timeline</a></li>
-						<li><a href="fav-page.html" title="">favourit page</a></li>
-					</ul>
-				</li>
-				<li>
 					<a href="#" title="">Project</a>
 					<ul>
-						<li><a href="about.html" title="">about</a></li>
-						<li><a href="contact.html" title="">contact</a></li>
-						<li><a href="faq.html" title="">faq's page</a></li>
-						<li><a href="insights.html" title="">insights</a></li>
+						<li><a href="about.html" title="">View Project</a></li>
+						<li><a href="contact.html" title="">Manage Project</a></li>
+						<li><a href="{{ url_for('create_project') }}" title="">Add a project</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -1043,6 +1035,17 @@
 		</div>	
 	</section>
 
+	<!-- Flash message section -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
 	<footer>
 		<div class="container">
 			<div class="row">
@@ -1050,10 +1053,10 @@
 					<div class="widget">
 						<div class="foot-logo">
 							<div class="logo">
-								<a href="index-2.html" title=""><img src="images/logo.png" alt=""></a>
+								<a href="#" title=""><img src="/static/images/logo_new.jpg" alt="OSSN" width="50" height="50"></a>
 							</div>	
 							<p>
-								This project aimsto develop a comprehensive social media system to facilitate and enhance open contribution to projects.
+								This project aims to develop a comprehensive social media system to facilitate and enhance open contribution to projects.
 							</p>
 						</div>
 						<ul class="location">
@@ -1118,6 +1121,18 @@
 				}, true);
 			});
 		});
+	</script>
+	<script>
+		// Function to show and auto-hide flash messages
+		function showFlashMessages() {
+			const flashMessages = document.querySelectorAll('.flash-message');
+			flashMessages.forEach(message => {
+				setTimeout(() => {
+					message.style.display = 'none';
+				}, 5000); // 2000 milliseconds = 2 seconds
+			});
+		}
+		window.onload = showFlashMessages;
 	</script>
 </body>	
 
