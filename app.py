@@ -237,7 +237,7 @@ def create_project():
         upload_date = datetime.now()
 
         if zip_file and zip_file.filename != '':
-            if allowed_file(zip_file.filename):
+            if (zip_file.filename):
                 # Create a directory for the user if it doesn't exist
                 user_folder = os.path.join(app.config['UPLOAD_FOLDER'], owner)
                 if not os.path.exists(user_folder):
