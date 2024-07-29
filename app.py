@@ -117,7 +117,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('landing'))
 
-def allowed_file(filename):
+def allowed_file_img(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -139,7 +139,7 @@ def edit_profile_basic():
         profile_photo_path = None
 
         if profile_photo and profile_photo.filename != '':
-            if allowed_file(profile_photo.filename):
+            if allowed_file_img(profile_photo.filename):
                 # Create a directory for the user if it doesn't exist
                 user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_name)
                 if not os.path.exists(user_folder):
@@ -285,6 +285,34 @@ def create_project():
             flash('No file selected or file is empty.', 'danger')
 
     return render_template('create_project.html')
+
+
+@app.route('/view_project', methods=['GET'])
+def view_project():
+    return render_template('view_project.html')
+
+@app.route('/view_project')
+def project_page():
+    user_name = session.get('user_name')  # Assuming user_name is stored in the session
+    if not user_name:
+        flash('User not logged in', 'danger')
+        return redirect(url_for('login'))  # Redirect to the login page or appropriate page if the user is not logged in
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = "SELECT project_name, abstract, owner, upload_date, likes FROM project_data WHERE owner = %s"
+            cursor.execute(query, (user_name,))
+            projects = cursor.fetchall()
+            print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
+    except Exception as e:
+        projects = []
+        print(f"Error fetching project data: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template('view_project.html', projects=projects)
 
 
 if __name__ == '__main__':
