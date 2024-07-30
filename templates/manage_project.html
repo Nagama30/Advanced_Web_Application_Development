@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+	<title>Open Source Social Network</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/title_pic.png') }}" type="image/png" sizes="16x16">
+    
+	<link rel="stylesheet" href="static/css/main.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/color.css">
+    <link rel="stylesheet" href="static/css/responsive.css">
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<style>
+		.table-wrapper {
+			margin: 0 auto;
+			overflow-x: auto;
+		}
+	
+		.text-center {
+			text-align: center;
+		}
+	
+		.btn {
+			margin: 5px;
+		}
+	
+		h3 {
+			text-align: center;
+			margin-bottom: 20px;
+		}
+	
+		.form-group {
+			margin-bottom: 0;
+		}
+	</style>
+
+</head>
+<body>
+<!--<div class="se-pre-con"></div>-->
+<div class="theme-layout">
+	
+	<div class="responsive-header">
+		<div class="mh-head first Sticky">
+			<span class="mh-btns-left">
+				<a class="" href="#menu"><i class="fa fa-align-justify"></i></a>
+			</span>
+			<span class="mh-text">
+				<a href="#" title="Open Source Social Network Logo" aria-label="Open Source Social Network Logo">
+					<img src="{{ url_for('static', filename='images/new_logo.jpg') }}" alt="OSSN">
+				</a>
+			</span>
+			<span class="mh-btns-right">
+				<a class="fa fa-sliders" href="#shoppingbag"></a>
+			</span>
+		</div>		
+	</div><!-- responsive header -->
+	
+	<div class="topbar stick">
+		<div class="logo">
+			<a title="" href="{{ url_for('account') }}"><img src="{{ url_for('static', filename='images/logo_new.jpg') }}" alt="OSSN" width="50" height="50"></a>
+		</div>
+		
+		<div class="top-area">
+			<ul class="main-menu">
+				<li>
+					<a href="{{ url_for('account') }}" title="">Home</a>
+				</li>
+				<li>
+					<a href="#" title="">Project</a>
+					<ul>
+						<li><a href="{{ url_for('view_project') }}" title="">View Project</a></li>
+						<li><a href="{{ url_for('manage_project') }}" title="">Manage Project</a></li>
+						<li><a href="{{ url_for('create_project') }}" title="">Add a project</a></li>
+					</ul>
+				</li>
+			</ul>
+			<ul class="setting-area">
+				<li>
+					<a href="#" title="Home" data-ripple=""><i class="ti-search"></i></a>
+					<div class="searched">
+						<form method="post" class="form-search">
+							<input type="text" placeholder="Search">
+							<button data-ripple><i class="ti-search"></i></button>
+						</form>
+					</div>
+				</li>
+			</ul>
+			<div class="user-img">
+				<img src="static/images/admin.png" alt="" width="30" height="30">
+				<span class="status f-online"></span>
+				<div class="user-setting">
+					<a href="{{ url_for('edit_profile_basic') }}" title=""><i class="ti-pencil-alt"></i>Edit profile</a>
+					<a href="{{ url_for('edit_password') }}" title=""><i class="ti-pencil-alt"></i>Change password</a>
+					<a href="{{ url_for('logout') }}" title=""><i class="ti-power-off"></i>log out</a>
+				</div>
+			</div>
+		</div>
+	</div><!-- topbar -->
+	
+
+	<section>
+        <div class="gap gray-bg">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="container mt-4">
+						<!-- Tab navigation -->
+						<ul class="nav nav-tabs" id="projectTabs" role="tablist">
+							<li class="nav-item">
+								<a class="nav-link active" id="edit-tab" data-toggle="tab" href="#edit" role="tab" aria-controls="edit" aria-selected="true">Edit Project</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" id="delete-tab" data-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete Project</a>
+							</li>
+						</ul>
+						
+						<!-- Tab content -->
+						<div class="tab-content" id="projectTabsContent">
+							<!-- Edit Project Tab -->
+							<div class="tab-pane fade show active" id="edit" role="tabpanel" aria-labelledby="edit-tab">
+								<h3 class="text-center mt-3">Projects with Edit Option</h3>
+								<form id="edit-form" method="post" action="{{ url_for('edit_projects') }}">
+									<div class="table-wrapper">
+										<table class="table table-striped table-hover table-bordered">
+											<thead class="thead-dark">
+												<tr>
+													<th>Select</th>
+													<th>Serial Number</th>
+													<th>Project Name</th>
+													<th>Abstract</th>
+													<th>Owner</th>
+													<th>Upload Date</th>
+													<th>Likes</th>
+													<th>Visibility</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{% for project in projects %}
+												<tr>
+													<td><input type="checkbox" name="project_ids" value="{{ project.id }}"></td>
+													<td>{{ loop.index }}</td>
+													<td><input type="text" name="project_name_{{ project.id }}" value="{{ project.project_name }}" disabled></td>
+													<td><input type="text" name="abstract_{{ project.id }}" value="{{ project.abstract }}" disabled></td>
+													<td>{{ project.owner }}</td>
+													<td>{{ project.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+													<td>{{ project.likes }}</td>
+													<td>
+														<div class="form-check">
+															<input class="form-check-input" type="radio" name="visibility_{{ project.id }}" id="private_{{ project.id }}" value="Private" {% if project.visibility == 'Private' %}checked{% endif %} disabled>
+															<label class="form-check-label" for="private_{{ project.id }}">Private</label>
+														</div>
+														<div class="form-check">
+															<input class="form-check-input" type="radio" name="visibility_{{ project.id }}" id="public_{{ project.id }}" value="Public" {% if project.visibility == 'Public' %}checked{% endif %} disabled>
+															<label class="form-check-label" for="public_{{ project.id }}">Public</label>
+														</div>
+													</td>
+													<td>
+														<button type="button" class="btn btn-warning edit-btn" data-project-id="{{ project.id }}">Edit</button>
+													</td>
+												</tr>
+												{% endfor %}
+											</tbody>
+										</table>
+									</div>
+									<div class="form-group text-center mt-3">
+										<button type="submit" class="btn btn-primary">Save Selected</button>
+									</div>
+								</form>
+							</div>
+						
+							<!-- Delete Project Tab -->
+							<div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+								<h3 class="text-center mt-3">Projects with Delete Option</h3>
+								<form id="delete-form" method="post" action="{{ url_for('delete_projects') }}">
+									<div class="table-wrapper">
+										<table class="table table-striped table-hover table-bordered">
+											<thead class="thead-dark">
+												<tr>
+													<th>Select</th>
+													<th>Serial Number</th>
+													<th>Project Name</th>
+													<th>Abstract</th>
+													<th>Owner</th>
+													<th>Upload Date</th>
+													<th>Likes</th>
+													<th>Visibility</th>
+													<th>Actions</th>
+												</tr>
+											</thead>
+											<tbody>
+												{% for project in projects %}
+												<tr>
+													<td><input type="checkbox" name="project_ids" value="{{ project.id }}"></td>
+													<td>{{ loop.index }}</td>
+													<td><a href="{{ url_for('download_project', project_id=project.id) }}" title="{{ project.project_name }}" class="text-primary">{{ project.project_name }}</a></td>
+													<td>{{ project.abstract }}</td>
+													<td>{{ project.owner }}</td>
+													<td>{{ project.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+													<td>{{ project.likes }}</td>
+													<td>{{ project.visibility }}</td>
+													<td><button type="button" class="btn btn-danger delete-btn" data-project-id="{{ project.id }}">Delete</button></td>
+												</tr>
+												{% endfor %}
+											</tbody>
+										</table>
+									</div>
+									<div class="form-group text-center mt-3">
+										<button type="submit" class="btn btn-danger">Delete Selected</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>		
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+	<!-- Flash message section -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+	<footer>
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-4 col-md-4">
+					<div class="widget">
+						<div class="foot-logo">
+							<div class="logo">
+								<a href="#" title=""><img src="/static/images/logo_new.jpg" alt="OSSN" width="50" height="50"></a>
+							</div>	
+							<p>
+								This project aims to develop a comprehensive social media system to facilitate and enhance open contribution to projects.
+							</p>
+						</div>
+						<ul class="location">
+							<li>
+								<i class="ti-map-alt"></i>
+								<p>1720 University Blvd, Birmingham, AL 35294, United States</p>
+							</li>
+							<li>
+								<i class="ti-mobile"></i>
+								<p>+1-205 12-345 67</p>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>follow</h4></div>
+						<ul class="list-style">
+							<li><i class="fa fa-facebook-square"></i> <a href="https://www.facebook.com/" title="">facebook</a></li>
+							<li><i class="fa fa-twitter-square"></i><a href="https://x.com/?lang=en" title="">X</a></li>
+							<li><i class="fa fa-instagram"></i><a href="https://www.instagram.com/?hl=en" title="">instagram</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>Navigate</h4></div>
+						<ul class="list-style">
+							<li><a href="https://www.uab.edu/home/" title="">about us</a></li>
+							<li><a href="https://www.uab.edu/home/" title="">contact us</a></li>
+							<li><a href="https://www.google.com/maps/place/University+of+Alabama+at+Birmingham/@33.5020367,-86.8083244,17z/data=!3m1!4b1!4m6!3m5!1s0x88891be961b81a47:0x51c659f9085bb04b!8m2!3d33.5020323!4d-86.8057495!16zL20vMDJqeXI4?entry=ttu" title="">Sitemap</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>download apps</h4></div>
+						<ul class="colla-apps">
+							<li><a href="https://play.google.com/store?hl=en" title=""><i class="fa fa-android"></i>android</a></li>
+							<li><a href="https://www.apple.com/lae/ios/app-store/" title=""><i class="ti-apple"></i>iPhone</a></li>
+							<li><a href="https://www.microsoft.com/store/apps" title=""><i class="fa fa-windows"></i>Windows</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer><!-- footer -->
+</div>
+
+	<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/main.min.js"></script>
+	<script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/map-init.js') }}"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8c55_YHLvDHGACkQscgbGLtLRdxBDCfI"></script>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.user-setting > a').forEach(function (link) {
+				link.addEventListener('click', function (event) {
+					console.log('Overriding link behavior:', event.target.href);
+					// Ensure the default action is allowed
+					event.stopPropagation(); // Prevent other handlers from running
+					// Remove any existing event listeners that might be preventing default action
+					link.onclick = null;
+				}, true);
+			});
+		});
+	</script>
+
+	<script>
+		// Function to show and auto-hide flash messages
+		function showFlashMessages() {
+			const flashMessages = document.querySelectorAll('.flash-message');
+			flashMessages.forEach(message => {
+				setTimeout(() => {
+					message.style.display = 'none';
+				}, 5000); // 2000 milliseconds = 2 seconds
+			});
+		}
+		window.onload = showFlashMessages;
+	</script>
+
+	<script>
+
+		document.addEventListener('DOMContentLoaded', function () {
+			// Handle enabling of form fields when Edit button is clicked
+			document.querySelectorAll('.edit-btn').forEach(button => {
+				button.addEventListener('click', function () {
+					const row = this.closest('tr');
+					// Enable all text inputs and radio buttons in this row
+					row.querySelectorAll('input[type="text"], input[type="radio"]').forEach(input => {
+						input.disabled = false;
+					});
+				});
+			});
+
+			// Handle form submission for deleting projects
+			document.getElementById('delete-form').addEventListener('submit', function (e) {
+				const checkboxes = document.querySelectorAll('input[name="project_ids"]:checked');
+				if (checkboxes.length === 0) {
+					e.preventDefault();
+					alert('No projects selected.');
+				}
+			});
+
+			// Handle form submission for saving edits
+			document.getElementById('edit-form').addEventListener('submit', function (e) {
+				const checkboxes = document.querySelectorAll('input[name="project_ids"]:checked');
+				if (checkboxes.length === 0) {
+					e.preventDefault();
+					alert('No projects selected.');
+				}
+			});
+
+			// Handle delete button click event
+			document.querySelectorAll('.delete-btn').forEach(button => {
+				button.addEventListener('click', function () {
+					const projectId = this.getAttribute('data-project-id');
+					if (confirm('Are you sure you want to delete this project?')) {
+						fetch(`/delete_project/${projectId}`, {
+							method: 'DELETE',
+						})
+						.then(response => response.json())
+						.then(data => {
+							if (data.success) {
+								location.reload();
+							} else {
+								alert('Error deleting project: ' + data.error);
+							}
+						})
+						.catch(error => {
+							console.error('Error:', error);
+							alert('Error deleting project: ' + error);
+						});
+					}
+				});
+			});
+
+		});
+
+
+	</script>
+</body>	
+
+
+</html>

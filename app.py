@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
 from psycopg2.extras import RealDictCursor
 import psycopg2
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
-
+from flask import jsonify
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
@@ -205,6 +205,7 @@ def create_project():
         owner = session.get('user_name')  # Assuming user_name is stored in the session
         zip_file = request.files.get('zip_file')
         upload_date = datetime.now()
+        visibility = request.form.get('visibility', 'Private')  # Default to 'Private' if not provided
 
         if zip_file and zip_file.filename != '':
             if zip_file.filename.endswith('.zip'):  # Ensure the uploaded file is a ZIP file
@@ -231,11 +232,11 @@ def create_project():
                     if conn:
                         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                             insert_query = """
-                            INSERT INTO project_data (project_name, abstract, owner, zip_file, upload_date)
-                            VALUES (%s, %s, %s, %s, %s)
+                            INSERT INTO project_data (project_name, abstract, owner, zip_file, upload_date, visibility)
+                            VALUES (%s, %s, %s, %s, %s, %s)
                             """
-                            print(f"Inserting into database: {project_name}, {abstract}, {owner}, {file_path}, {upload_date}")
-                            cursor.execute(insert_query, (project_name, abstract, owner, file_path, upload_date))
+                            print(f"Inserting into database: {project_name}, {abstract}, {owner}, {file_path}, {upload_date}, {visibility}")
+                            cursor.execute(insert_query, (project_name, abstract, owner, file_path, upload_date, visibility))
                             conn.commit()
                             flash('Project created and file uploaded successfully!', 'success')
                 except Exception as e:
@@ -253,6 +254,32 @@ def create_project():
     return render_template('create_project.html')
 
 
+@app.route('/download_project/<int:project_id>')
+def download_project(project_id):
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = "SELECT zip_file FROM project_data WHERE id = %s"
+            cursor.execute(query, (project_id,))
+            project = cursor.fetchone()
+            if project:
+                file_path = project['zip_file']
+                if os.path.exists(file_path):
+                    return send_file(file_path, as_attachment=True)
+                else:
+                    flash('File not found', 'danger')
+            else:
+                flash('Project not found', 'danger')
+    except Exception as e:
+        print(f"Error fetching project data: {e}")
+        flash('Error fetching project data', 'danger')
+    finally:
+        if conn:
+            conn.close()
+    
+    return redirect(url_for('view_project'))
+
+
 @app.route('/view_project')
 def view_project():
     user_name = session.get('user_name')  # Assuming user_name is stored in the session
@@ -263,7 +290,39 @@ def view_project():
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            query = "SELECT project_name, abstract, owner, upload_date, likes FROM project_data WHERE owner = %s"
+            query = "SELECT id, project_name, abstract, owner, upload_date, likes FROM project_data WHERE owner = %s"
+            cursor.execute(query, (user_name,))
+            projects = cursor.fetchall()
+            # Format the upload_date in human-readable format
+            for project in projects:
+                project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
+            print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
+    except Exception as e:
+        projects = []
+        print(f"Error fetching project data: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template('view_project.html', projects=projects)
+
+
+
+@app.route('/manage_project')
+def manage_project():
+    user_name = session.get('user_name')  # Assuming user_name is stored in the session
+    if not user_name:
+        flash('User not logged in', 'danger')
+        return redirect(url_for('login'))  # Redirect to the login page or appropriate page if the user is not logged in
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            query = """
+                SELECT id, project_name, abstract, owner, upload_date, likes, visibility 
+                FROM project_data 
+                WHERE owner = %s
+            """
             cursor.execute(query, (user_name,))
             projects = cursor.fetchall()
             print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
@@ -274,7 +333,88 @@ def view_project():
         if conn:
             conn.close()
 
-    return render_template('view_project.html', projects=projects)
+    return render_template('manage_project.html', projects=projects)
+
+
+@app.route('/delete_projects', methods=['POST'])
+def delete_projects():
+    project_ids = request.form.getlist('project_ids')
+    if not project_ids:
+        flash('No projects selected', 'danger')
+        return redirect(url_for('manage_project'))
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "DELETE FROM project_data WHERE id = ANY(%s)"
+            cursor.execute(query, (project_ids,))
+            conn.commit()
+            flash('Selected projects have been deleted.', 'success')
+    except Exception as e:
+        print(f"Error deleting projects: {e}")
+        flash(f'Error deleting projects: {e}', 'danger')
+    finally:
+        if conn:
+            conn.close()
+
+    return redirect(url_for('manage_project'))
+
+
+@app.route('/delete_project/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            query = "DELETE FROM project_data WHERE id = %s"
+            cursor.execute(query, (project_id,))
+            conn.commit()
+            return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error deleting project: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/edit_projects', methods=['POST'])
+def edit_projects():
+    project_ids = request.form.getlist('project_ids')
+    if not project_ids:
+        flash('No projects selected.', 'danger')
+        return redirect(url_for('manage_project'))
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            for project_id in project_ids:
+                # Fetch form values for each project
+                project_name = request.form.get(f'project_name_{project_id}')
+                abstract = request.form.get(f'abstract_{project_id}')
+                visibility = request.form.get(f'visibility_{project_id}')
+                
+                # Check if any field is missing
+                if not project_name or not abstract or not visibility:
+                    flash(f'Missing values for project ID {project_id}.', 'warning')
+                    continue
+
+                # Update the project in the database
+                query = """UPDATE project_data 
+                           SET project_name = %s, abstract = %s, visibility = %s
+                           WHERE id = %s"""
+                cursor.execute(query, (project_name, abstract, visibility, project_id))
+            
+            # Commit all updates
+            conn.commit()
+            flash('Selected projects have been updated.', 'success')
+    except Exception as e:
+        print(f"Error updating projects: {e}")
+        flash(f'Error updating projects: {e}', 'danger')
+    finally:
+        if conn:
+            conn.close()
+
+    return redirect(url_for('manage_project'))
 
 
 if __name__ == '__main__':

@@ -43,13 +43,13 @@
 		<div class="top-area">
 			<ul class="main-menu">
 				<li>
-					<a href="#" title="">Home</a>
+					<a href="{{ url_for('account') }}" title="">Home</a>
 				</li>
 				<li>
 					<a href="#" title="">Project</a>
 					<ul>
 						<li><a href="{{ url_for('view_project') }}" title="">View Project</a></li>
-						<li><a href="contact.html" title="">Manage Project</a></li>
+						<li><a href="{{ url_for('manage_project') }}" title="">Manage Project</a></li>
 						<li><a href="{{ url_for('create_project') }}" title="">Add a project</a></li>
 					</ul>
 				</li>
@@ -83,39 +83,41 @@
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="row" id="page-contents">
-                            {% for project in projects %}
-                            <div class="central-meta item">
-                                <div class="user-post">
-                                    <div class="friend-info">
-                                        <div class="friend-name">
-                                            <ins><a href="#" title="{{ project.project_name }}"><label>{{ project.owner }}</label></a></ins> <!--name of the project owner-->
-                                            <span><label>{{ project.upload_date }}</label></span> <!--upload date-->
-                                        </div>
-                                        <div class="post-meta">
-                                            <div class="we-video-info">
-                                                <ul>
-                                                    <li>
-                                                        <span class="like" data-toggle="tooltip" title="like">
-                                                            <i class="ti-heart"></i>
-                                                            <ins><label>{{ project.likes }}</label></ins> <!--number of likes-->
-                                                        </span>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div class="description">
-                                                <span><label>{{ project.project_name }}</label></span> <!--project name-->
-                                                <p>
-                                                    {{ project.abstract }} <!--Abstract-->
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+						<div class="row" id="page-contents">
+							{% for project in projects %}
+							<div class="central-meta item">
+								<div class="user-post">
+									<div class="friend-info">
+										<div class="friend-name">
+											<ins><a href="{{ url_for('download_project', project_id=project.id) }}" title="{{ project.project_name }}">
+												<label>{{ project.project_name }}</label>
+											</a></ins> <!-- project name as a link -->
+											<span><label>Published on : {{ project.upload_date }}</label></span> <!-- upload date -->
+										</div>
+										<div class="post-meta">
+											<div class="we-video-info">
+												<ul>
+													<li>
+														<span class="like" data-toggle="tooltip" title="like">
+															<i class="ti-heart"></i>
+															<ins><label>{{ project.likes }}</label></ins> <!-- number of likes -->
+														</span>
+													</li>
+												</ul>
+											</div>
+											<div class="description">
+												<span><label>{{ project.project_name }}</label></span> <!-- project name -->
+												<p>
+													{{ project.abstract }} <!-- Abstract -->
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+					</div>
                 </div>
             </div>
         </div>
