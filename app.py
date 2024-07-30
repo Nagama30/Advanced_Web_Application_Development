@@ -96,14 +96,45 @@ def account():
     if 'user_id' not in session:
         flash('Please log in to access this page.', 'warning')
         return redirect(url_for('index'))
-    else :
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
-        posts = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return render_template('account.html', user_name=session['user_name'], posts=posts)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
+    posts = cursor.fetchall()
+
+    for post in posts:
+        cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
+        post['comments'] = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('account.html', user_name=session['user_name'], posts=posts)
+
+
+@app.route('/add_comment/<int:post_id>', methods=['POST'])
+def add_comment(post_id):
+    if 'user_name' not in session:
+        flash('Please log in to add a comment.', 'warning')
+        return redirect(url_for('index'))
+    
+    comment_content = request.form['comment']
+    user_name = session['user_name']
+    timestamp = datetime.now()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(
+        'INSERT INTO comments (post_id, user_name, content, timestamp) VALUES (%s, %s, %s, %s)',
+        (post_id, user_name, comment_content, timestamp)
+    )
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('account'))
 
 @app.route('/landing')
 def landing():

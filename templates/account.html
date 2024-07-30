@@ -14,6 +14,42 @@
     <link rel="stylesheet" href="static/css/color.css">
     <link rel="stylesheet" href="static/css/responsive.css">
 
+	<style>
+		/* Style for the comment button */
+		.btn-comment {
+			#background-color: #333; /* Dark color */
+			color: #0cc4f7; /* White text */
+			border: none; /* Remove border */
+			padding: 8px 6px; /* Add padding */
+			padding-top: 2px;
+			font-size: 14px; /* Font size */
+			font-weight: bold; /* Bold text */
+			cursor: pointer; /* Pointer cursor on hover */
+			border-radius: 4px; /* Rounded corners */
+			transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+			width: auto; /* Set a fixed width */
+			height: auto;
+    		text-align: center; /* Center text horizontally */
+			position: relative; /* Relative positioning for the button */
+			top: -10px; /* Moves the button up by 10px, adjust as needed */
+		}
+
+		/* Style for the comment textarea */
+		.post-comt-box textarea {
+			width: 100%; /* Full width */
+			padding: 10px; /* Padding inside the textarea */
+			border: 1px solid #ccc; /* Light grey border */
+			border-radius: 4px; /* Rounded corners */
+			margin-bottom: 10px; /* Space below the textarea */
+			resize: vertical; /* Allow vertical resize only */
+
+		}
+
+		/* Additional styling if needed */
+		.post-comt-box {
+			margin-top: 20px; /* Space above the comment box */
+		}
+	</style>
 </head>
 <body>
 <!--<div class="se-pre-con"></div>-->
@@ -93,7 +129,7 @@
 										<ul class="naves">
 											<li>
 												<i class="ti-clipboard"></i>
-												<a href="newsfeed.html" title="">News feed</a>
+												<a href="{{ url_for('account') }}" title="">News feed</a>
 											</li>
 											<li>
 												<i class="ti-mouse-alt"></i>
@@ -202,10 +238,44 @@
 													</div>
 												</div>
 											</div>
+								
+											<div class="coment-area">
+												<ul class="we-comet">
+													<!-- Comment Form -->
+													<li>
+														<div class="post-comt-box">
+															<form method="post" action="{{ url_for('add_comment', post_id=post.id) }}">
+																<textarea name="comment" placeholder="Post your comment" required></textarea>
+																<div class="add-smiles">
+																	<span class="em em-expressionless" title="add icon"></span>
+																</div>
+																<button type="submit" class="btn-comment">Comment</button>
+															</form>
+														</div>
+													</li>
+								
+													<!-- Existing Comments -->
+													{% for comment in post.comments %}
+													<li>
+														<div class="comet-avatar">
+															<img src="images/resources/comet-1.jpg" alt="">
+														</div>
+														<div class="we-comment">
+															<div class="coment-head">
+																<h5><a href="time-line.html" title="">{{ comment.user_name }}</a></h5>
+																<span>{{ comment.timestamp.strftime('%B %d, %Y %I:%M %p') }}</span>
+																<a class="we-reply" href="#" title="Reply"><i class="fa fa-reply"></i></a>
+															</div>
+															<p>{{ comment.content }}</p>
+														</div>
+													</li>
+													{% endfor %}
+												</ul>
+											</div>
 										</div>
 									</div>
 									{% endfor %}
-								</div>
+								</div>															
 							</div><!-- centerl meta -->
 							<div class="col-lg-3">
 								<aside class="sidebar static">
