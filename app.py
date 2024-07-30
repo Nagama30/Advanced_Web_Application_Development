@@ -102,6 +102,10 @@ def account():
     cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
     posts = cursor.fetchall()
 
+    if not posts:
+        flash('No posts found.', 'info')  # Flash a message if no posts are found
+        return render_template('account.html', user_name=session['user_name'], posts=[])
+
     for post in posts:
         cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
         post['comments'] = cursor.fetchall()
@@ -110,7 +114,6 @@ def account():
     conn.close()
     
     return render_template('account.html', user_name=session['user_name'], posts=posts)
-
 
 @app.route('/add_comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
@@ -326,25 +329,27 @@ def view_project():
         flash('User not logged in', 'danger')
         return redirect(url_for('login'))  # Redirect to the login page or appropriate page if the user is not logged in
 
+    projects = []  # Initialize projects as an empty list
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             query = "SELECT id, project_name, abstract, owner, upload_date, likes FROM project_data WHERE owner = %s"
             cursor.execute(query, (user_name,))
             projects = cursor.fetchall()
+            if not projects:
+                flash('No projects found.', 'info')  # Flash a message if no projects are found
             # Format the upload_date in human-readable format
             for project in projects:
                 project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
             print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
     except Exception as e:
-        projects = []
+        flash('Error fetching project data. Please try again later.', 'danger')
         print(f"Error fetching project data: {e}")
     finally:
         if conn:
             conn.close()
 
     return render_template('view_project.html', user_name=session['user_name'], projects=projects)
-
 
 @app.route('/manage_project')
 def manage_project():
@@ -353,6 +358,7 @@ def manage_project():
         flash('User not logged in', 'danger')
         return redirect(url_for('login'))  # Redirect to the login page or appropriate page if the user is not logged in
 
+    projects = []  # Initialize projects as an empty list
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -363,22 +369,27 @@ def manage_project():
             """
             cursor.execute(query, (user_name,))
             projects = cursor.fetchall()
+            if not projects:
+                flash('No projects found.', 'info')  # Flash a message if no projects are found
+            # Format the upload_date in human-readable format
+            for project in projects:
+                project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
             print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
     except Exception as e:
-        projects = []
+        flash('Error fetching project data. Please try again later.', 'danger')
         print(f"Error fetching project data: {e}")
     finally:
         if conn:
             conn.close()
-    return render_template('manage_project.html', user_name=session['user_name'], projects=projects)
 
+    return render_template('manage_project.html', user_name=session['user_name'], projects=projects)
 
 @app.route('/delete_projects', methods=['POST'])
 def delete_projects():
     project_ids = request.form.getlist('project_ids')
     if not project_ids:
         flash('No projects selected', 'danger')
-        return redirect(url_for('manage_project'), user_name=session['user_name'])
+        return redirect(url_for('manage_project'))  # Redirect to manage_project page if no projects are selected
 
     try:
         conn = get_db_connection()
@@ -386,16 +397,19 @@ def delete_projects():
             query = "DELETE FROM project_data WHERE id = ANY(%s)"
             cursor.execute(query, (project_ids,))
             conn.commit()
-            flash('Selected projects have been deleted.', 'success')
+
+            if cursor.rowcount == 0:
+                flash('No projects were deleted. Please try again.', 'info')  # No rows affected
+            else:
+                flash('Selected projects have been deleted.', 'success')
     except Exception as e:
-        print(f"Error deleting projects: {e}")
         flash(f'Error deleting projects: {e}', 'danger')
+        print(f"Error deleting projects: {e}")
     finally:
         if conn:
             conn.close()
 
-    return redirect(url_for('manage_project'), user_name=session['user_name'])
-
+    return redirect(url_for('manage_project'))
 
 @app.route('/delete_project/<int:project_id>', methods=['DELETE'])
 def delete_project(project_id):
