@@ -96,7 +96,14 @@ def account():
     if 'user_id' not in session:
         flash('Please log in to access this page.', 'warning')
         return redirect(url_for('index'))
-    return render_template('account.html', user_name=session['user_name'])
+    else :
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
+        posts = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return render_template('account.html', user_name=session['user_name'], posts=posts)
 
 @app.route('/landing')
 def landing():
@@ -152,9 +159,9 @@ def edit_profile_basic():
             if conn:
                 conn.close()
 
-        return redirect(url_for('edit_profile_basic'))  # Assuming there's a profile page to redirect to
+        return redirect(url_for('edit_profile_basic'), user_name=session['user_name'])  # Assuming there's a profile page to redirect to
 
-    return render_template('edit_profile_basic.html')
+    return render_template('edit_profile_basic.html', user_name=session['user_name'])
 
 
 @app.route('/edit_password', methods=['GET', 'POST'])
@@ -167,7 +174,7 @@ def edit_password():
 
         if new_pass != confirm_pass:
             flash('New password and confirmation do not match!', 'danger')
-            return redirect(url_for('edit_password'))
+            return redirect(url_for('edit_password'), user_name=session['user_name'])
 
         try:
             conn = get_db_connection()
@@ -192,14 +199,15 @@ def edit_password():
             if conn:
                 conn.close()
 
-        return redirect(url_for('edit_password'))  # Redirect to the password edit page
+        return redirect(url_for('edit_password'), user_name=session['user_name'])  # Redirect to the password edit page
 
-    return render_template('edit_password.html')
+    return render_template('edit_password.html', user_name=session['user_name'])
 
 
 @app.route('/create_project', methods=['GET', 'POST'])
 def create_project():
     if request.method == 'POST':
+        user_name = session.get('user_name')
         project_name = request.form.get('project_name')
         abstract = request.form.get('abstract')
         owner = session.get('user_name')  # Assuming user_name is stored in the session
@@ -251,7 +259,7 @@ def create_project():
                 flash('Invalid file type. Only ZIP files are allowed.', 'danger')
         else:
             flash('No file selected or file is empty.', 'danger')
-    return render_template('create_project.html')
+    return render_template('create_project.html', user_name=session['user_name'])
 
 
 @app.route('/download_project/<int:project_id>')
@@ -277,7 +285,7 @@ def download_project(project_id):
         if conn:
             conn.close()
     
-    return redirect(url_for('view_project'))
+    return redirect(url_for('view_project'), user_name=session['user_name'])
 
 
 @app.route('/view_project')
@@ -304,8 +312,7 @@ def view_project():
         if conn:
             conn.close()
 
-    return render_template('view_project.html', projects=projects)
-
+    return render_template('view_project.html', user_name=session['user_name'], projects=projects)
 
 
 @app.route('/manage_project')
@@ -332,8 +339,7 @@ def manage_project():
     finally:
         if conn:
             conn.close()
-
-    return render_template('manage_project.html', projects=projects)
+    return render_template('manage_project.html', user_name=session['user_name'], projects=projects)
 
 
 @app.route('/delete_projects', methods=['POST'])
@@ -341,7 +347,7 @@ def delete_projects():
     project_ids = request.form.getlist('project_ids')
     if not project_ids:
         flash('No projects selected', 'danger')
-        return redirect(url_for('manage_project'))
+        return redirect(url_for('manage_project'), user_name=session['user_name'])
 
     try:
         conn = get_db_connection()
@@ -357,7 +363,7 @@ def delete_projects():
         if conn:
             conn.close()
 
-    return redirect(url_for('manage_project'))
+    return redirect(url_for('manage_project'), user_name=session['user_name'])
 
 
 @app.route('/delete_project/<int:project_id>', methods=['DELETE'])
@@ -382,7 +388,7 @@ def edit_projects():
     project_ids = request.form.getlist('project_ids')
     if not project_ids:
         flash('No projects selected.', 'danger')
-        return redirect(url_for('manage_project'))
+        return redirect(url_for('manage_project'), user_name=session['user_name'])
 
     try:
         conn = get_db_connection()
@@ -414,7 +420,30 @@ def edit_projects():
         if conn:
             conn.close()
 
-    return redirect(url_for('manage_project'))
+    return redirect(url_for('manage_project'), user_name=session['user_name'])
+
+
+@app.route('/create_post', methods=['POST'])
+def create_post():
+    content = request.form['content']
+    user_name = session.get('user_name')  # Assuming user_name is stored in the session
+
+    if content:
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO posts (user_name, content, timestamp) VALUES (%s, %s, %s)', (user_name, content, datetime.now()))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            flash('Post created successfully!', 'success')
+        except Exception as e:
+            flash(f'Error creating post: {e}', 'danger')
+    else:
+        flash('Content cannot be empty', 'warning')
+
+    return redirect(url_for('account'))
+
 
 
 if __name__ == '__main__':
