@@ -14,6 +14,12 @@
     <link rel="stylesheet" href="static/css/color.css">
     <link rel="stylesheet" href="static/css/responsive.css">
 
+	<style>
+		/* Default heart icon color */
+		.ti-heart.liked {
+    		color: red;
+		}
+	</style>
 </head>
 <body>
 <!--<div class="se-pre-con"></div>-->
@@ -98,21 +104,23 @@
 											<span><label>Published on : {{ project.upload_date }}</label></span> <!-- upload date -->
 										</div>
 										<div class="post-meta">
-											<div class="we-video-info">
-												<ul>
-													<li>
-														<span class="like" data-toggle="tooltip" title="like">
-															<i class="ti-heart"></i>
-															<ins><label>{{ project.likes }}</label></ins> <!-- number of likes -->
-														</span>
-													</li>
-												</ul>
-											</div>
 											<div class="description">
 												<span><label>{{ project.project_name }}</label></span> <!-- project name -->
 												<p>
 													{{ project.abstract }} <!-- Abstract -->
 												</p>
+											</div>
+											<div class="we-video-info">
+												<ul>
+													<li>
+														<span class="like" data-toggle="tooltip" title="like">
+															<a href="#" onclick="toggleLike({{ project.id }}); return false;">
+																<i id="like-icon-{{ project.id }}" class="ti-heart {% if project.liked %}liked{% endif %}"></i>
+															</a>
+															<ins><label id="likes-count-{{ project.id }}">{{ project.likes }}</label></ins> <!-- number of likes -->
+														</span>
+													</li>
+												</ul>
 											</div>
 										</div>
 									</div>
@@ -231,6 +239,38 @@
 		window.onload = showFlashMessages;
 	</script>
 
+	<!-- JavaScript for Handling Like Toggle -->
+	<script>
+		// JavaScript for Handling Like Toggle
+		function toggleLike(projectId) {
+			fetch('/toggle_like', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ project_id: projectId })
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.liked !== undefined) {
+					// Update the like icon and count
+					const icon = document.getElementById(`like-icon-${projectId}`);
+					const likeCountLabel = document.getElementById(`likes-count-${projectId}`);
+					if (data.liked) {
+						icon.classList.add('liked'); // Add 'liked' class if liked
+					} else {
+						icon.classList.remove('liked'); // Remove 'liked' class if unliked
+					}
+					likeCountLabel.textContent = parseInt(likeCountLabel.textContent) + (data.liked ? 1 : -1);
+				} else {
+					console.error('Error toggling like:', data.error);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+			});
+		}
+	</script>
 	
 </body>	
 

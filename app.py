@@ -475,6 +475,7 @@ def download_project(project_id):
 @app.route('/view_project')
 def view_project():
     user_name = session.get('user_name')  # Assuming user_name is stored in the session
+    user = session.get('user_name')
     if not user_name:
         flash('User not logged in', 'danger')
         return redirect(url_for('login'))  # Redirect to the login page or appropriate page if the user is not logged in
@@ -492,6 +493,12 @@ def view_project():
             for project in projects:
                 project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
             print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
+            
+            cursor.execute('SELECT * FROM project_data')
+            projects = cursor.fetchall()
+            for project in projects:
+                project['liked'] = get_project_likes_status(user, project['id'])
+
     except Exception as e:
         flash('Error fetching project data. Please try again later.', 'danger')
         print(f"Error fetching project data: {e}")
@@ -500,6 +507,7 @@ def view_project():
             conn.close()
 
     return render_template('view_project.html', user_name=session['user_name'], projects=projects)
+
 
 @app.route('/manage_project')
 def manage_project():
@@ -643,6 +651,99 @@ def create_post():
 
     return redirect(url_for('account'))
 
+
+@app.route('/project/<int:project_id>')
+def project_detail(project_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM project_data WHERE id = %s", (project_id,))
+    project = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not project:
+        return "Project not found", 404
+
+    return render_template('project_detail.html', project=project)
+
+def get_project_likes_status(user, project_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT COUNT(*) 
+        FROM project_likes 
+        WHERE project_id = %s AND users = %s
+    """, (project_id, user))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return result[0] > 0
+
+
+@app.route('/toggle_like', methods=['POST'])
+def toggle_like():
+    try:
+        user_name = session.get('user_name')
+        if not user_name:
+            return jsonify({'error': 'User not logged in'}), 401
+
+        project_id = request.json.get('project_id')
+        if not project_id:
+            return jsonify({'error': 'No project ID provided'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the user already liked the project
+        cursor.execute("""
+            SELECT * FROM project_likes 
+            WHERE project_id = %s AND users = %s
+        """, (project_id, user_name))
+        existing_like = cursor.fetchone()
+
+        if existing_like:
+            # User already liked, so remove the like
+            cursor.execute("""
+                DELETE FROM project_likes 
+                WHERE project_id = %s AND users = %s
+            """, (project_id, user_name))
+            conn.commit()
+
+            # Decrement like count in project_data table
+            cursor.execute("""
+                UPDATE project_data 
+                SET likes = likes - 1 
+                WHERE id = %s
+            """, (project_id,))
+            conn.commit()
+
+            result = {'liked': False}
+        else:
+            # User has not liked yet, so add the like
+            cursor.execute("""
+                INSERT INTO project_likes (project_id, users) 
+                VALUES (%s, %s)
+            """, (project_id, user_name))
+            conn.commit()
+
+            # Increment like count in project_data table
+            cursor.execute("""
+                UPDATE project_data 
+                SET likes = likes + 1 
+                WHERE id = %s
+            """, (project_id,))
+            conn.commit()
+
+            result = {'liked': True}
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error: {e}")  # Print error message for debugging
+        return jsonify({'error': 'Failed to toggle like'}), 500
 
 
 if __name__ == '__main__':
