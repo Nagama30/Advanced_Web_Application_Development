@@ -7,6 +7,11 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
+import io
+import base64
+import matplotlib.pyplot as plt
+import pandas as pd
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
@@ -93,26 +98,52 @@ def login():
 
     return render_template('landing.html')
 
-@app.route('/account')
-def account():
-    if 'user_id' not in session:
-        flash('Please log in to access this page.', 'warning')
-        return redirect(url_for('index'))
-
-    user = session['user_name']
+def get_comments_count_for_user(user):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
-    posts = cursor.fetchall()
-                                                                               
-    if not posts:
-        flash('No posts found.', 'info')  # Flash a message if no posts are found
-        return render_template('account.html', user_name=session['user_name'], posts=[])
+    cursor.execute("""
+        SELECT COUNT(*) AS total_comments
+        FROM comments c
+        JOIN posts p ON c.post_id = p.id
+        WHERE p.user_name = %s
+          AND DATE_TRUNC('month', c.timestamp) = DATE_TRUNC('month', CURRENT_DATE);
+    """, (user,))
+    comments_count = cursor.fetchone()['total_comments']
+    cursor.close()
+    conn.close()
+    return comments_count
 
-    for post in posts:
-        cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
-        post['comments'] = cursor.fetchall()
-    
+def get_likes_count_for_user(user):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT SUM(likes) AS total_likes
+        FROM project_data
+        WHERE owner = %s
+          AND DATE_TRUNC('month', upload_date) = DATE_TRUNC('month', CURRENT_DATE);
+    """, (user,))
+    likes_count = cursor.fetchone()['total_likes'] or 0  # Handle NULL by defaulting to 0
+    cursor.close()
+    conn.close()
+    return likes_count
+
+def get_followers_for_user(user):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT u.user_name, u.email 
+        FROM followers f 
+        JOIN users u ON f.follower_user_name = u.user_name 
+        WHERE f.user_name = %s;
+    """, (user,))
+    my_followers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return my_followers
+
+def get_friends_for_user(user):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute("""
         SELECT u.user_name AS friend, u.email
         FROM followers f1
@@ -120,16 +151,47 @@ def account():
         JOIN users u ON f1.follower_user_name = u.user_name
         WHERE f1.user_name = %s
     """, (user,))
-    followers_list = cursor.fetchall()
+    friends_list = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return friends_list
+
+@app.route('/account')
+def account():
+    if 'user_id' not in session:
+        flash('Please log in to access this page.', 'warning')
+        return redirect(url_for('index'))
+
+    user = session['user_name']
     
-    # Debugging print statements
-    print(f"User: {user}")
-    print(f"Followers List: {followers_list}")
+    # Call helper functions
+    comments_count = get_comments_count_for_user(user)
+    likes_count = get_likes_count_for_user(user)
+    friends_list = get_friends_for_user(user)
+    my_followers = get_followers_for_user(user)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Fetch posts
+    cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
+    posts = cursor.fetchall()
+    
+    if not posts:
+        flash('No posts found.', 'info')
+        cursor.close()
+        conn.close()
+        return render_template('account.html', user_name=session['user_name'], posts=[], followers_list=[], comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
+
+    # Fetch comments for each post
+    for post in posts:
+        cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
+        post['comments'] = cursor.fetchall()
     
     cursor.close()
     conn.close()
     
-    return render_template('account.html', user_name=session['user_name'], posts=posts, followers_list=followers_list)
+    return render_template('account.html', user_name=session['user_name'], posts=posts, friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/add_comment/<int:post_id>', methods=['POST'])
