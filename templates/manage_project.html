@@ -125,7 +125,7 @@
 						<div class="tab-content" id="projectTabsContent">
 							<!-- Edit Project Tab -->
 							<div class="tab-pane fade show active" id="edit" role="tabpanel" aria-labelledby="edit-tab">
-								<h3 class="text-center mt-3">Projects with Edit Option</h3>
+								<h3 class="text-center mt-3">Edit Projects</h3>
 								<form id="edit-form" method="post" action="{{ url_for('edit_projects') }}">
 									<div class="table-wrapper">
 										<table class="table table-striped table-hover table-bordered">
@@ -150,7 +150,7 @@
 													<td><input type="text" name="project_name_{{ project.id }}" value="{{ project.project_name }}" disabled></td>
 													<td><input type="text" name="abstract_{{ project.id }}" value="{{ project.abstract }}" disabled></td>
 													<td>{{ project.owner }}</td>
-													<td>{{ project.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+													<td>{{ project.upload_date }}</td>
 													<td>{{ project.likes }}</td>
 													<td>
 														<div class="form-check">
@@ -178,7 +178,7 @@
 						
 							<!-- Delete Project Tab -->
 							<div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
-								<h3 class="text-center mt-3">Projects with Delete Option</h3>
+								<h3 class="text-center mt-3">Delete Projects</h3>
 								<form id="delete-form" method="post" action="{{ url_for('delete_projects') }}">
 									<div class="table-wrapper">
 										<table class="table table-striped table-hover table-bordered">
@@ -203,7 +203,7 @@
 													<td><a href="{{ url_for('download_project', project_id=project.id) }}" title="{{ project.project_name }}" class="text-primary">{{ project.project_name }}</a></td>
 													<td>{{ project.abstract }}</td>
 													<td>{{ project.owner }}</td>
-													<td>{{ project.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+													<td>{{ project.upload_date }}</td>
 													<td>{{ project.likes }}</td>
 													<td>{{ project.visibility }}</td>
 													<td><button type="button" class="btn btn-danger delete-btn" data-project-id="{{ project.id }}">Delete</button></td>

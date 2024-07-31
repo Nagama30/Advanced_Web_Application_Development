@@ -6,9 +6,11 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask import jsonify
+from flask_socketio import SocketIO, emit, join_room, leave_room
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for flash messages
+socketio = SocketIO(app)
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -362,6 +364,7 @@ def manage_project():
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Fetch projects owned by the current user
             query = """
                 SELECT id, project_name, abstract, owner, upload_date, likes, visibility 
                 FROM project_data 
@@ -373,16 +376,19 @@ def manage_project():
                 flash('No projects found.', 'info')  # Flash a message if no projects are found
             # Format the upload_date in human-readable format
             for project in projects:
-                project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
+                # Ensure upload_date is a datetime object
+                if isinstance(project['upload_date'], datetime):
+                    project['upload_date'] = project['upload_date'].strftime('%Y-%m-%d %H:%M:%S')
             print(f"Projects fetched: {projects}")  # Debug: Print fetched projects
     except Exception as e:
         flash('Error fetching project data. Please try again later.', 'danger')
         print(f"Error fetching project data: {e}")
+        print(traceback.format_exc())
     finally:
         if conn:
             conn.close()
 
-    return render_template('manage_project.html', user_name=session['user_name'], projects=projects)
+    return render_template('manage_project.html', projects=projects)
 
 @app.route('/delete_projects', methods=['POST'])
 def delete_projects():
@@ -433,7 +439,7 @@ def edit_projects():
     project_ids = request.form.getlist('project_ids')
     if not project_ids:
         flash('No projects selected.', 'danger')
-        return redirect(url_for('manage_project'), user_name=session['user_name'])
+        return redirect(url_for('manage_project'))
 
     try:
         conn = get_db_connection()
@@ -465,7 +471,7 @@ def edit_projects():
         if conn:
             conn.close()
 
-    return redirect(url_for('manage_project'), user_name=session['user_name'])
+    return redirect(url_for('manage_project'))
 
 
 @app.route('/create_post', methods=['POST'])
