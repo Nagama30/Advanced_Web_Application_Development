@@ -235,6 +235,13 @@ def logout():
 
 @app.route('/edit_profile_basic', methods=['GET', 'POST'])
 def edit_profile_basic():
+
+    # Initialize default values
+    comments_count = 0
+    likes_count = 0
+    friends_list = []
+    my_followers = []
+    
     if request.method == 'POST':
         user_name = session.get('user_name')  # Assuming user_name is stored in the session
         first_last_name = request.form.get('first_last_name')
@@ -274,11 +281,33 @@ def edit_profile_basic():
 
         return redirect(url_for('edit_profile_basic'), user_name=session['user_name'])  # Assuming there's a profile page to redirect to
 
-    return render_template('edit_profile_basic.html', user_name=session['user_name'])
+    elif request.method == 'GET':
+        user_name = session.get('user_name')
+
+        # Call helper functions
+        comments_count = get_comments_count_for_user(user_name) or 0
+        likes_count = get_likes_count_for_user(user_name) or 0
+        friends_list = get_friends_for_user(user_name) or []
+        my_followers = get_followers_for_user(user_name) or []
+
+
+        # Debugging: print values to console
+        print(f"Comments count: {comments_count}")
+        print(f"Likes count: {likes_count}")
+        print(f"Friends list: {friends_list}")
+        print(f"My followers: {my_followers}")
+
+    return render_template('edit_profile_basic.html', user_name=session['user_name'], friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/edit_password', methods=['GET', 'POST'])
 def edit_password():
+    # Initialize default values
+    comments_count = 0
+    likes_count = 0
+    friends_list = []
+    my_followers = []
+    
     if request.method == 'POST':
         user_name = session.get('user_name')  # Assuming user_name is stored in the session
         old_pass = request.form.get('old_pass')
@@ -314,13 +343,36 @@ def edit_password():
 
         return redirect(url_for('edit_password'), user_name=session['user_name'])  # Redirect to the password edit page
 
-    return render_template('edit_password.html', user_name=session['user_name'])
+    elif request.method == 'GET':
+        user_name = session.get('user_name')
+
+        # Call helper functions
+        comments_count = get_comments_count_for_user(user_name) or 0
+        likes_count = get_likes_count_for_user(user_name) or 0
+        friends_list = get_friends_for_user(user_name) or []
+        my_followers = get_followers_for_user(user_name) or []
+
+
+        # Debugging: print values to console
+        print(f"Comments count: {comments_count}")
+        print(f"Likes count: {likes_count}")
+        print(f"Friends list: {friends_list}")
+        print(f"My followers: {my_followers}")
+
+    return render_template('edit_password.html', user_name=session['user_name'], friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/create_project', methods=['GET', 'POST'])
 def create_project():
+    # Initialize default values
+    comments_count = 0
+    likes_count = 0
+    friends_list = []
+    my_followers = []
+
     if request.method == 'POST':
         user_name = session.get('user_name')
+
         project_name = request.form.get('project_name')
         abstract = request.form.get('abstract')
         owner = session.get('user_name')  # Assuming user_name is stored in the session
@@ -371,8 +423,27 @@ def create_project():
             else:
                 flash('Invalid file type. Only ZIP files are allowed.', 'danger')
         else:
+
             flash('No file selected or file is empty.', 'danger')
-    return render_template('create_project.html', user_name=session['user_name'])
+
+    elif request.method == 'GET':
+
+        user_name = session.get('user_name')
+
+        # Call helper functions
+        comments_count = get_comments_count_for_user(user_name) or 0
+        likes_count = get_likes_count_for_user(user_name) or 0
+        friends_list = get_friends_for_user(user_name) or []
+        my_followers = get_followers_for_user(user_name) or []
+
+
+        # Debugging: print values to console
+        print(f"Comments count: {comments_count}")
+        print(f"Likes count: {likes_count}")
+        print(f"Friends list: {friends_list}")
+        print(f"My followers: {my_followers}")
+
+    return render_template('create_project.html', user_name=session.get('user_name', ''), friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/download_project/<int:project_id>')
