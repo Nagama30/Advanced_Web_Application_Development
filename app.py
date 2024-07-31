@@ -99,11 +99,12 @@ def account():
         flash('Please log in to access this page.', 'warning')
         return redirect(url_for('index'))
 
+    user = session['user_name']
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
     posts = cursor.fetchall()
-
+                                                                               
     if not posts:
         flash('No posts found.', 'info')  # Flash a message if no posts are found
         return render_template('account.html', user_name=session['user_name'], posts=[])
@@ -112,10 +113,24 @@ def account():
         cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
         post['comments'] = cursor.fetchall()
     
+    cursor.execute("""
+        SELECT u.user_name AS friend, u.email
+        FROM followers f1
+        JOIN followers f2 ON f1.user_name = f2.follower_user_name AND f1.follower_user_name = f2.user_name
+        JOIN users u ON f1.follower_user_name = u.user_name
+        WHERE f1.user_name = %s
+    """, (user,))
+    followers_list = cursor.fetchall()
+    
+    # Debugging print statements
+    print(f"User: {user}")
+    print(f"Followers List: {followers_list}")
+    
     cursor.close()
     conn.close()
     
-    return render_template('account.html', user_name=session['user_name'], posts=posts)
+    return render_template('account.html', user_name=session['user_name'], posts=posts, followers_list=followers_list)
+
 
 @app.route('/add_comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
