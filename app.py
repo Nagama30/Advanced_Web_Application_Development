@@ -811,19 +811,6 @@ def send_follow_request():
         cur.close()
         conn.close()
 
-@app.route('/profile/<user_name>')
-def profile(user_name):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT first_last_name, user_name, email FROM users WHERE user_name = %s", (user_name,))
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
-    if user:
-        return render_template('profile.html', user={'first_last_name': user[0], 'user_name': user[1], 'email': user[2]})
-    else:
-        return "User not found", 404
-
 
 @app.route('/cancel_follow_request', methods=['POST'])
 def cancel_follow_request():

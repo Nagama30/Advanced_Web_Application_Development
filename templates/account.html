@@ -95,7 +95,7 @@
 			</span>
 			<span class="mh-text">
 				<a href="#" title="Open Source Social Network Logo" aria-label="Open Source Social Network Logo">
-					<img src="{{ url_for('static', filename='images/new_logo.jpg') }}" alt="OSSN">
+					<img src="{{ url_for('static', filename='images/logo_new.jpg') }}" alt="OSSN">
 				</a>
 			</span>
 			<span class="mh-btns-right">
@@ -247,7 +247,7 @@
 										<div class="user-post">
 											<div class="friend-info">
 												<figure>
-													<img src="images/resources/friend-avatar10.jpg" alt="">
+													<img src="static/images/admin.png" alt="">
 												</figure>
 												<div class="friend-name">
 													<ins><a href="time-line.html" title="">{{ post.user_name }}</a></ins>
@@ -279,7 +279,7 @@
 													{% for comment in post.comments %}
 													<li>
 														<div class="comet-avatar">
-															<img src="images/resources/comet-1.jpg" alt="">
+															<img src="static/images/users_logo.jpg" alt="" width="50x" height="50px">
 														</div>
 														<div class="we-comment">
 															<div class="coment-head">
@@ -332,7 +332,6 @@
 										<div class="banner medium-opacity bluesh">
 											<div class="bg-image" style="background-image: url(images/resources/baner-widgetbg.jpg)"></div>
 											<div class="baner-top">
-												<span><img alt="" src="images/book-icon.png"></span>
 												<i class="fa fa-ellipsis-h"></i>
 											</div>
 											<div class="banermeta">
