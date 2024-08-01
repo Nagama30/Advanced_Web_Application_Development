@@ -746,6 +746,93 @@ def toggle_like():
         return jsonify({'error': 'Failed to toggle like'}), 500
 
 
+@app.route('/search')
+def search():
+    user_name = session.get('user_name')  # Assuming user_name is stored in the session
+    return render_template('search.html', user_name=session['user_name'])
+
+
+@app.route('/search_users', methods=['POST'])
+def search_users():
+    search_term = request.form['search_term']
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT u.first_last_name, u.user_name, u.email, 
+               (SELECT COUNT(*) FROM project_data p WHERE p.owner = u.user_name) as total_projects,
+               (SELECT COUNT(*) FROM posts po WHERE po.user_name = u.user_name) as total_posts
+        FROM users u
+        WHERE u.user_name ILIKE %s OR u.first_last_name ILIKE %s
+    """, ('%' + search_term + '%', '%' + search_term + '%'))
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    return jsonify([
+        {
+            'first_last_name': row[0], 
+            'user_name': row[1], 
+            'email': row[2],
+            'total_projects': row[3],
+            'total_posts': row[4]
+        } 
+        for row in results
+    ])
+
+@app.route('/send_follow_request', methods=['POST'])
+def send_follow_request():
+    to_user_name = request.form['user_name']
+    from_user_name = session.get('user_name') # Replace with actual logged-in user logic
+
+    if from_user_name == to_user_name:
+        return jsonify({'success': False, 'message': 'Cannot follow yourself.'})
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("INSERT INTO follow_requests (from_user_name, to_user_name) VALUES (%s, %s)", (from_user_name, to_user_name))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        print(f"Error sending follow request: {e}")
+        return jsonify({'success': False})
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/profile/<user_name>')
+def profile(user_name):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT first_last_name, user_name, email FROM users WHERE user_name = %s", (user_name,))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    if user:
+        return render_template('profile.html', user={'first_last_name': user[0], 'user_name': user[1], 'email': user[2]})
+    else:
+        return "User not found", 404
+
+
+@app.route('/cancel_follow_request', methods=['POST'])
+def cancel_follow_request():
+    to_user_name = request.form['user_name']
+    from_user_name = session.get('user_name')   # Replace with actual logged-in user logic
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("DELETE FROM follow_requests WHERE from_user_name = %s AND to_user_name = %s", (from_user_name, to_user_name))
+        conn.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        conn.rollback()
+        print(f"Error canceling follow request: {e}")
+        return jsonify({'success': False})
+    finally:
+        cur.close()
+        conn.close()
+
 if __name__ == '__main__':
     print("Starting Flask app...")
     app.run(debug=True)

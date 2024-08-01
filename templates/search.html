@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+	<title>Open Source Social Network</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/title_pic.png') }}" type="image/png" sizes="16x16">
+    
+	<link rel="stylesheet" href="static/css/main.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <link rel="stylesheet" href="static/css/color.css">
+    <link rel="stylesheet" href="static/css/responsive.css">
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .user-search-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .user-search-form {
+            display: flex;
+            width: 50%;
+            margin-bottom: 20px;
+        }
+        .user-search-form input {
+            flex-grow: 1;
+            padding: 10px;
+            margin-right: 5px;
+        }
+        .user-search-form button {
+            padding: 10px;
+        }
+        .user-search-results {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            margin: 0;
+        }
+        .user-search-results th,
+        .user-search-results td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .user-search-results th {
+            background-color: #f1f1f1;
+        }
+        .follow-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .follow-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<!--<div class="se-pre-con"></div>-->
+<div class="theme-layout">
+	
+	<div class="responsive-header">
+		<div class="mh-head first Sticky">
+			<span class="mh-btns-left">
+				<a class="" href="#menu"><i class="fa fa-align-justify"></i></a>
+			</span>
+			<span class="mh-text">
+				<a href="#" title="Open Source Social Network Logo" aria-label="Open Source Social Network Logo">
+					<img src="{{ url_for('static', filename='images/new_logo.jpg') }}" alt="OSSN">
+				</a>
+			</span>
+			<span class="mh-btns-right">
+				<a class="fa fa-sliders" href="#shoppingbag"></a>
+			</span>
+		</div>		
+	</div><!-- responsive header -->
+	
+	<div class="topbar stick">
+		<div class="logo">
+			<a title="" href="{{ url_for('account') }}"><img src="{{ url_for('static', filename='images/logo_new.jpg') }}" alt="OSSN" width="50" height="50"></a>
+		</div>
+		
+		<div class="top-area">
+			<ul class="main-menu">
+				<li>
+					<a href="{{ url_for('account') }}" title="">Home</a>
+				</li>
+				<li>
+					<a href="#" title="">Project</a>
+					<ul>
+						<li><a href="{{ url_for('view_project') }}" title="">View Project</a></li>
+						<li><a href="{{ url_for('manage_project') }}" title="">Manage Project</a></li>
+						<li><a href="{{ url_for('create_project') }}" title="">Add a project</a></li>
+					</ul>
+				</li>
+			</ul>
+			<ul>
+				<li>
+					<a href="{{ url_for('search') }}" title="Home" data-ripple="">
+						<i class="ti-search"></i> Search
+					</a>
+				</li>
+			</ul>
+			<ul class="setting-area">
+				<li>
+					<span> Welcome <b>{{ user_name }}</b></span>
+				</li>
+			</ul>
+			<div class="user-img">
+				<img src="static/images/admin.png" alt="" width="30" height="30">
+				<span class="status f-online"></span>
+				<div class="user-setting">
+					<a href="{{ url_for('edit_profile_basic') }}" title=""><i class="ti-pencil-alt"></i>Edit profile</a>
+					<a href="{{ url_for('edit_password') }}" title=""><i class="ti-pencil-alt"></i>Change password</a>
+					<a href="{{ url_for('logout') }}" title=""><i class="ti-power-off"></i>log out</a>
+				</div>
+			</div>
+		</div>
+	</div><!-- topbar -->
+	
+
+	<section>
+        <div class="gap gray-bg">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+						<h3> Search for a user </h3>
+						<div class="user-search-container">
+							<form method="post" class="user-search-form" id="user-search-form">
+								<input type="text" id="user-search-input" placeholder="Search">
+								<button type="submit" data-ripple><i class="ti-search"></i> Search</button>
+							</form>
+							<table id="user-search-results" class="user-search-results">
+								<h3> Search Results</h3>
+								<!-- Search results will be displayed here -->
+							</table>
+						</div>
+					</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+	<!-- Flash message section -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+	<footer>
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-4 col-md-4">
+					<div class="widget">
+						<div class="foot-logo">
+							<div class="logo">
+								<a href="#" title=""><img src="/static/images/logo_new.jpg" alt="OSSN" width="50" height="50"></a>
+							</div>	
+							<p>
+								This project aims to develop a comprehensive social media system to facilitate and enhance open contribution to projects.
+							</p>
+						</div>
+						<ul class="location">
+							<li>
+								<i class="ti-map-alt"></i>
+								<p>1720 University Blvd, Birmingham, AL 35294, United States</p>
+							</li>
+							<li>
+								<i class="ti-mobile"></i>
+								<p>+1-205 12-345 67</p>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>follow</h4></div>
+						<ul class="list-style">
+							<li><i class="fa fa-facebook-square"></i> <a href="https://www.facebook.com/" title="">facebook</a></li>
+							<li><i class="fa fa-twitter-square"></i><a href="https://x.com/?lang=en" title="">X</a></li>
+							<li><i class="fa fa-instagram"></i><a href="https://www.instagram.com/?hl=en" title="">instagram</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>Navigate</h4></div>
+						<ul class="list-style">
+							<li><a href="https://www.uab.edu/home/" title="">about us</a></li>
+							<li><a href="https://www.uab.edu/home/" title="">contact us</a></li>
+							<li><a href="https://www.google.com/maps/place/University+of+Alabama+at+Birmingham/@33.5020367,-86.8083244,17z/data=!3m1!4b1!4m6!3m5!1s0x88891be961b81a47:0x51c659f9085bb04b!8m2!3d33.5020323!4d-86.8057495!16zL20vMDJqeXI4?entry=ttu" title="">Sitemap</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-lg-2 col-md-4">
+					<div class="widget">
+						<div class="widget-title"><h4>download apps</h4></div>
+						<ul class="colla-apps">
+							<li><a href="https://play.google.com/store?hl=en" title=""><i class="fa fa-android"></i>android</a></li>
+							<li><a href="https://www.apple.com/lae/ios/app-store/" title=""><i class="ti-apple"></i>iPhone</a></li>
+							<li><a href="https://www.microsoft.com/store/apps" title=""><i class="fa fa-windows"></i>Windows</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+	</footer><!-- footer -->
+</div>
+
+	<script data-cfasync="false" src="../../cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/main.min.js"></script>
+	<script src="{{ url_for('static', filename='js/main.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/map-init.js') }}"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8c55_YHLvDHGACkQscgbGLtLRdxBDCfI"></script>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			document.querySelectorAll('.user-setting > a').forEach(function (link) {
+				link.addEventListener('click', function (event) {
+					console.log('Overriding link behavior:', event.target.href);
+					// Ensure the default action is allowed
+					event.stopPropagation(); // Prevent other handlers from running
+					// Remove any existing event listeners that might be preventing default action
+					link.onclick = null;
+				}, true);
+			});
+		});
+	</script>
+
+	<script>
+		// Function to show and auto-hide flash messages
+		function showFlashMessages() {
+			const flashMessages = document.querySelectorAll('.flash-message');
+			flashMessages.forEach(message => {
+				setTimeout(() => {
+					message.style.display = 'none';
+				}, 5000); // 2000 milliseconds = 2 seconds
+			});
+		}
+		window.onload = showFlashMessages;
+	</script>
+
+	<!-- JavaScript for Handling Like Toggle -->
+	<script>
+		// JavaScript for Handling Like Toggle
+		function toggleLike(projectId) {
+			fetch('/toggle_like', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ project_id: projectId })
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.liked !== undefined) {
+					// Update the like icon and count
+					const icon = document.getElementById(`like-icon-${projectId}`);
+					const likeCountLabel = document.getElementById(`likes-count-${projectId}`);
+					if (data.liked) {
+						icon.classList.add('liked'); // Add 'liked' class if liked
+					} else {
+						icon.classList.remove('liked'); // Remove 'liked' class if unliked
+					}
+					likeCountLabel.textContent = parseInt(likeCountLabel.textContent) + (data.liked ? 1 : -1);
+				} else {
+					console.error('Error toggling like:', data.error);
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+			});
+		}
+	</script>
+	
+
+	<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('user-search-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const searchTerm = document.getElementById('user-search-input').value;
+
+                if (searchTerm.trim() === '') {
+                    document.getElementById('user-search-results').innerHTML = '';
+                    return;
+                }
+                
+                fetch('/search_users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `search_term=${encodeURIComponent(searchTerm)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const resultsTable = document.getElementById('user-search-results');
+                    resultsTable.innerHTML = ''; // Clear previous results
+
+                    if (data.length === 0) {
+                        resultsTable.innerHTML = '<tr><td colspan="7">No results found</td></tr>';
+                    } else {
+                        const headerRow = `
+                            <tr>
+                                <th>#</th>
+                                <th>First Last Name</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Total Projects</th>
+                                <th>Total Posts</th>
+                                <th>Action</th>
+                            </tr>
+                        `;
+                        resultsTable.insertAdjacentHTML('beforeend', headerRow);
+
+                        data.forEach((user, index) => {
+                            const row = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${user.first_last_name}</td>
+                                    <td><a href="/profile/${user.user_name}">${user.user_name}</a></td>
+                                    <td>${user.email}</td>
+                                    <td>${user.total_projects}</td>
+                                    <td>${user.total_posts}</td>
+                                    <td><button class="follow-button" data-username="${user.user_name}" data-status="follow">Follow</button></td>
+                                </tr>
+                            `;
+                            resultsTable.insertAdjacentHTML('beforeend', row);
+                        });
+
+                        // Attach event listeners to follow buttons
+                        document.querySelectorAll('.follow-button').forEach(button => {
+                            button.addEventListener('click', function() {
+                                const username = this.getAttribute('data-username');
+                                const currentStatus = this.getAttribute('data-status');
+
+                                if (currentStatus === 'follow') {
+                                    fetch('/send_follow_request', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded'
+                                        },
+                                        body: `user_name=${encodeURIComponent(username)}`
+                                    })
+                                    .then(response => response.json())
+                                    .then(result => {
+                                        if (result.success) {
+                                            this.textContent = 'Request Sent';
+                                            this.setAttribute('data-status', 'cancel');
+                                        } else {
+                                            alert('Failed to send follow request.');
+                                        }
+                                    })
+                                    .catch(error => console.error('Error:', error));
+                                } else {
+                                    if (confirm('Do you want to cancel your follow request?')) {
+                                        fetch('/cancel_follow_request', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded'
+                                            },
+                                            body: `user_name=${encodeURIComponent(username)}`
+                                        })
+                                        .then(response => response.json())
+                                        .then(result => {
+                                            if (result.success) {
+                                                this.textContent = 'Follow';
+                                                this.setAttribute('data-status', 'follow');
+                                            } else {
+                                                alert('Failed to cancel follow request.');
+                                            }
+                                        })
+                                        .catch(error => console.error('Error:', error));
+                                    }
+                                }
+                            });
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>	
+</html>

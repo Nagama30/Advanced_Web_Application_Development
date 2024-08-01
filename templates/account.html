@@ -49,6 +49,39 @@
 		.post-comt-box {
 			margin-top: 20px; /* Space above the comment box */
 		}
+		/* Add this to your CSS file or in a <style> tag in your HTML */
+			.searched {
+    position: relative; /* Ensure the dropdown is positioned relative to this container */
+}
+
+.search-results {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px; /* Adjust height as needed */
+    overflow-y: auto; /* Add scroll if content overflows */
+    position: absolute;
+    top: 100%; /* Position directly below the search input */
+    left: 0;
+    width: 100%; /* Make it match the width of the search input */
+    min-width: 200px; /* Set a minimum width */
+    z-index: 1000;
+    display: none; /* Hide by default */
+}
+
+.search-results li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.search-results li:hover {
+    background-color: #f0f0f0;
+}
+
+
 	</style>
 </head>
 <body>
@@ -90,18 +123,16 @@
 					</ul>
 				</li>
 			</ul>
+			<ul>
+				<li>
+					<a href="{{ url_for('search') }}" title="Home" data-ripple="">
+						<i class="ti-search"></i> Search
+					</a>
+				</li>
+			</ul>
 			<ul class="setting-area">
 				<li>
 					<span> Welcome <b>{{ user_name }}</b></span>
-				</li>
-				<li>
-					<a href="#" title="Home" data-ripple=""><i class="ti-search"></i></a>
-					<div class="searched">
-						<form method="post" class="form-search">
-							<input type="text" placeholder="Search">
-							<button data-ripple><i class="ti-search"></i></button>
-						</form>
-					</div>
 				</li>
 			</ul>
 			<div class="user-img">
@@ -421,6 +452,8 @@
 		}
 		window.onload = showFlashMessages;
 	</script>
+	
+
 </body>	
 
 </html>
