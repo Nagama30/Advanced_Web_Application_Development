@@ -185,6 +185,24 @@
 										</ul>
 									</div><!-- Shortcuts -->
 									<div class="widget stick-widget">
+										<h4 class="widget-title">Follow Request</h4>
+										<ul class="followers">
+											{% for request in follow_requests %}
+											<li>
+												<figure>
+													<img src="{{ url_for('static', filename='images/users_logo.jpg') }}" alt="USER">
+												</figure>
+												<div class="friend-meta">
+													<b><a href="#">{{ request[0] }}</a></b>
+													<i><a href="mailto:{{ request[2] }}">{{ request[2] }}</a></i>
+													<button id="accept" name="accept" class="follow-request-button" data-username="{{ request[0] }}">Accept</button>
+													<button id="reject" name="reject" class="follow-request-button" data-username="{{ request[0] }}">Reject</button>
+												</div>
+											</li>
+											{% endfor %}
+										</ul>
+									</div>
+									<div class="widget stick-widget">
 										<h4 class="widget-title">Who's following</h4>
 										<ul class="followers">
 											{% for follower in my_followers %}
@@ -453,7 +471,39 @@
 		window.onload = showFlashMessages;
 	</script>
 	
-
-</body>	
-
+	<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			document.querySelectorAll('.follow-request-button').forEach(button => {
+				button.addEventListener('click', function() {
+					const username = this.getAttribute('data-username');
+					const action = this.id === 'accept' ? 'accept_follow_request' : 'reject_follow_request';
+		
+					console.log(`Button clicked: ${action} for user ${username}`);  // Debug statement
+		
+					fetch(`/${action}`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						},
+						body: `username=${encodeURIComponent(username)}`
+					})
+					.then(response => {
+						console.log(response);  // Debug statement
+						return response.json();
+					})
+					.then(result => {
+						console.log(result);  // Debug statement
+						if (result.success) {
+							this.closest('li').remove();
+						} else {
+							alert('Failed to process request.');
+						}
+					})
+					.catch(error => console.error('Error:', error));
+				});
+			});
+		});
+	</script>
+		
+</body>
 </html>

@@ -156,6 +156,23 @@ def get_friends_for_user(user):
     conn.close()
     return friends_list
 
+def get_follow_requests(user):
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT fr.from_user_name, u.first_last_name, u.email 
+        FROM follow_requests fr
+        JOIN users u ON fr.from_user_name = u.user_name
+        WHERE fr.to_user_name = %s
+    """, (user,))
+    
+    follow_requests = cur.fetchall()
+    cur.close()
+    conn.close()
+    return follow_requests
+
+
 @app.route('/account')
 def account():
     if 'user_id' not in session:
@@ -169,6 +186,7 @@ def account():
     likes_count = get_likes_count_for_user(user)
     friends_list = get_friends_for_user(user)
     my_followers = get_followers_for_user(user)
+    follow_requests = get_follow_requests(user)
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -177,12 +195,6 @@ def account():
     cursor.execute('SELECT * FROM posts ORDER BY timestamp DESC')
     posts = cursor.fetchall()
     
-    if not posts:
-        flash('No posts found.', 'info')
-        cursor.close()
-        conn.close()
-        return render_template('account.html', user_name=session['user_name'], posts=[], followers_list=[], comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
-
     # Fetch comments for each post
     for post in posts:
         cursor.execute('SELECT * FROM comments WHERE post_id = %s ORDER BY timestamp DESC', (post['id'],))
@@ -191,8 +203,7 @@ def account():
     cursor.close()
     conn.close()
     
-    return render_template('account.html', user_name=session['user_name'], posts=posts, friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
-
+    return render_template('account.html', user_name=session['user_name'], posts=posts, friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers, follow_requests=follow_requests)
 
 @app.route('/add_comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
@@ -832,6 +843,40 @@ def cancel_follow_request():
     finally:
         cur.close()
         conn.close()
+
+
+@app.route('/accept_follow_request', methods=['POST'])
+def accept_follow_request():
+    print("Accept request received")  # Debug statement
+    from_user = request.form['username']
+    to_user = session['user_name']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Add to followers
+    cur.execute('INSERT INTO followers (user_name, follower_user_name) VALUES (%s, %s)', (to_user, from_user))
+    # Remove from follow_requests
+    cur.execute('DELETE FROM follow_requests WHERE from_user_name = %s AND to_user_name = %s', (from_user, to_user))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify(success=True)
+
+@app.route('/reject_follow_request', methods=['POST'])
+def reject_follow_request():
+    print("Reject request received")  # Debug statement
+    from_user = request.form['username']
+    to_user = session['user_name']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Remove from follow_requests
+    cur.execute('DELETE FROM follow_requests WHERE from_user_name = %s AND to_user_name = %s', (from_user, to_user))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify(success=True)
+
 
 if __name__ == '__main__':
     print("Starting Flask app...")
