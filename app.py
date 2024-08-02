@@ -480,7 +480,7 @@ def download_project(project_id):
         if conn:
             conn.close()
     
-    return redirect(url_for('view_project'), user_name=session['user_name'])
+    return redirect(url_for('view_project'))
 
 
 @app.route('/view_project')
@@ -517,7 +517,7 @@ def view_project():
         if conn:
             conn.close()
 
-    return render_template('view_project.html', user_name=session['user_name'], projects=projects)
+    return render_template('view_project.html', projects=projects)
 
 
 @app.route('/manage_project')
