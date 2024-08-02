@@ -290,7 +290,7 @@ def edit_profile_basic():
             if conn:
                 conn.close()
 
-        return redirect(url_for('edit_profile_basic'), user_name=session['user_name'])  # Assuming there's a profile page to redirect to
+        return redirect(url_for('edit_profile_basic'))  # Assuming there's a profile page to redirect to
 
     elif request.method == 'GET':
         user_name = session.get('user_name')
