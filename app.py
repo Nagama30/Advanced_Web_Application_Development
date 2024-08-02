@@ -308,7 +308,7 @@ def edit_profile_basic():
         print(f"Friends list: {friends_list}")
         print(f"My followers: {my_followers}")
 
-    return render_template('edit_profile_basic.html', user_name=session['user_name'], friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
+    return render_template('edit_profile_basic.html', friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/edit_password', methods=['GET', 'POST'])
@@ -327,7 +327,7 @@ def edit_password():
 
         if new_pass != confirm_pass:
             flash('New password and confirmation do not match!', 'danger')
-            return redirect(url_for('edit_password'), user_name=session['user_name'])
+            return redirect(url_for('edit_password'))
 
         try:
             conn = get_db_connection()
@@ -352,7 +352,7 @@ def edit_password():
             if conn:
                 conn.close()
 
-        return redirect(url_for('edit_password'), user_name=session['user_name'])  # Redirect to the password edit page
+        return redirect(url_for('edit_password'))  # Redirect to the password edit page
 
     elif request.method == 'GET':
         user_name = session.get('user_name')
@@ -370,7 +370,7 @@ def edit_password():
         print(f"Friends list: {friends_list}")
         print(f"My followers: {my_followers}")
 
-    return render_template('edit_password.html', user_name=session['user_name'], friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
+    return render_template('edit_password.html', friends_list=friends_list, comments_count=comments_count, likes_count=likes_count, my_followers=my_followers)
 
 
 @app.route('/create_project', methods=['GET', 'POST'])
